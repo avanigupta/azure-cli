@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 from enum import Enum
-import json
 import uuid
 import azure.cli.command_modules.appconfig._azconfig.constants as constants
 
@@ -80,8 +79,6 @@ class QueryKeyValueOptions(object):
         A request ID that, if provided, can be used to help track the operation.
     :ivar string correlation_request_id:
         An ID that can be used to correlate the request with a more general operation.
-    :ivar string content_type:
-        Content_type of the key-value entry
     '''
 
     empty_label = u'\0'
@@ -91,8 +88,7 @@ class QueryKeyValueOptions(object):
                  query_datetime=None,
                  fields=None,
                  client_request_id=None,
-                 correlation_request_id=None,
-                 content_type=None):
+                 correlation_request_id=None):
         self.label = label
         self.query_datetime = query_datetime
         self.fields = fields
@@ -100,7 +96,6 @@ class QueryKeyValueOptions(object):
             uuid.uuid4()) if client_request_id is None else client_request_id
         self.correlation_request_id = str(
             uuid.uuid4()) if correlation_request_id is None else correlation_request_id
-        self.content_type = content_type
 
 
 class QueryKeyValueCollectionOptions(object):
@@ -119,8 +114,6 @@ class QueryKeyValueCollectionOptions(object):
         A request ID that, if provided, can be used to help track the operation.
     :ivar string correlation_request_id:
         An ID that can be used to correlate the request with a more general operation.
-    :ivar string content_type:
-        Content_type of the key-value entry
     '''
 
     any_key = '*'
@@ -133,8 +126,7 @@ class QueryKeyValueCollectionOptions(object):
                  query_datetime=None,
                  fields=None,
                  client_request_id=None,
-                 correlation_request_id=None,
-                 content_type=None):
+                 correlation_request_id=None):
         self.key_filter = key_filter
         self.label_filter = label_filter
         self.query_datetime = query_datetime
@@ -143,7 +135,6 @@ class QueryKeyValueCollectionOptions(object):
             uuid.uuid4()) if client_request_id is None else client_request_id
         self.correlation_request_id = str(
             uuid.uuid4()) if correlation_request_id is None else correlation_request_id
-        self.content_type = content_type        
 
 
 class ModifyKeyValueOptions(object):
