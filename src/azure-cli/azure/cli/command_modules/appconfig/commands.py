@@ -72,4 +72,6 @@ def load_command_table(self, _):
     # FeatureManagement Commands
     with self.command_group('appconfig feature', configstore_feature_util) as g:
         g.command('set', 'set_feature')
+        g.command('delete', 'delete_feature')
         g.command('show', 'show_feature')
+        g.command('list', 'list_feature')

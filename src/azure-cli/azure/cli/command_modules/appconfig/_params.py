@@ -28,7 +28,7 @@ def load_arguments(self, _):
         nargs='+',
         help='Customize output fields.',
         validator=validate_query_fields,
-        arg_type=get_enum_type(['key', 'value', 'label', 'content_type', 'etag', 'locked', 'last_modified'])
+        arg_type=get_enum_type(['key', 'value', 'label', 'content_type', 'etag', 'tags', 'locked', 'last_modified'])
     )
     feature_fields_arg_type = CLIArgumentType(
         nargs='+',
@@ -43,7 +43,7 @@ def load_arguments(self, _):
     top_arg_type = CLIArgumentType(
         options_list=['--top', '-t'],
         type=int,
-        help='Maximum number of items to return. Default to 100.'
+        help='Maximum number of items to return. Must be a positive integer. Default to 100.'
     )
 
     with self.argument_context('appconfig') as c:
@@ -158,3 +158,12 @@ def load_arguments(self, _):
         c.argument('feature', help='Name of the Feature flag to be set.')
         c.argument('label', help="If no label specified, set the feature flag with null label by default")
         c.argument('description', help='Description of the feature flag to be set.')
+
+    with self.argument_context('appconfig feature delete') as c:
+        c.argument('feature', help='Key of the Feature to be deleted. Support star sign as filters, for instance * means all key and abc* means keys with abc as prefix. Similarly, *abc and *abc* are also supported.  Comma separated keys are not supported. Please provide escaped string if your feature name contains comma.')
+        c.argument('label', help="If no label specified, delete the feature flag with null label by default. Support star sign as filters, for instance * means all key and abc* means keys with abc as prefix. Similarly, *abc and *abc* are also supported.")
+
+    with self.argument_context('appconfig feature list') as c:
+        c.argument('feature', help='Key of the Feature to be listed. Support star sign as filters, for instance * means all key and abc* means keys with abc as prefix. Similarly, *abc and *abc* are also supported. Comma separated keys are not supported. Please provide escaped string if your feature name contains comma.')
+        c.argument('label', help="If no label specified, list the feature flag with null label by default. Support star sign as filters, for instance * means all key and abc* means keys with abc as prefix. Similarly, *abc and *abc* are also supported.")
+        c.argument('fields', arg_type=feature_fields_arg_type)

@@ -9,6 +9,7 @@ import io
 import json
 import sys
 import time
+import re
 
 import chardet
 import javaproperties
@@ -25,9 +26,8 @@ from ._azconfig.exceptions import HTTPException
 from ._azconfig.models import (KeyValue,
                                ModifyKeyValueOptions,
                                QueryKeyValueCollectionOptions,
-                               QueryKeyValueOptions,
-                               FeatureFlagValue)
-import azure.cli.command_modules.appconfig._azconfig.mapper as mapper
+                               QueryKeyValueOptions)
+import azure.cli.command_modules.appconfig._featuremodels as _featuremodels
 
 
 
@@ -38,12 +38,12 @@ FEATURE_FLAG_CONTENT_TYPE = "application/vnd.microsoft.appconfig.ff+json;charset
 # Feature commands
 
 def set_feature(cmd,
-            feature,
-            name=None,
-            label=None,
-            description=None,
-            yes=False,
-            connection_string=None):
+                feature,
+                name=None,
+                label=None,
+                description=None,
+                yes=False,
+                connection_string=None):
     
     key = FEATURE_FLAG_PREFIX + feature
     content_type = FEATURE_FLAG_CONTENT_TYPE
@@ -113,7 +113,7 @@ def set_feature(cmd,
         else:
             # User can only update description if the key already exists 
             # label is already the same as retrieved key
-            value = mapper.map_json_to_featureflagvalue(json.loads(retrieved_kv.value))
+            value = _featuremodels.map_json_to_featureflagvalue(json.loads(retrieved_kv.value))
             value.description=description
 
             set_kv = KeyValue(key=key,
@@ -124,22 +124,17 @@ def set_feature(cmd,
             set_kv.etag = retrieved_kv.etag
             set_kv.last_modified = retrieved_kv.last_modified
         
-        feature_flag_display = mapper.map_featureflag_value_to_display(value)
-
-        # locked and LastModified values come from the KeyValue object
+        feature_flag_display = _featuremodels.map_featureflag_value_to_display(value)
         feature_flag_display.locked = set_kv.locked
         feature_flag_display.last_modified = set_kv.last_modified
+
         entry = json.dumps(feature_flag_display.__dict__, indent=2, sort_keys=True)
-        confirmation_message = "Are you sure you want to set the key: \n" + entry + "\n"
+        confirmation_message = "Are you sure you want to set the feature flag: \n" + entry + "\n"
         user_confirmation(confirmation_message, yes)
 
         try:
             updated_key_value = azconfig_client.add_keyvalue(set_kv, ModifyKeyValueOptions()) if set_kv.etag is None else azconfig_client.update_keyvalue(set_kv, ModifyKeyValueOptions())
-            updated_value = mapper.map_json_to_featureflagvalue(json.loads(updated_key_value.value))
-            updated_display = mapper.map_featureflag_value_to_display(updated_value)
-            updated_display.locked = updated_key_value.locked
-            updated_display.last_modified = updated_key_value.last_modified
-            return updated_display
+            return _featuremodels.map_keyvalue_to_featureflagdisplay(keyvalue=updated_key_value, show_conditions=True)
         except HTTPException as exception:
             if exception.status == StatusCodes.PRECONDITION_FAILED:
                 logger.debug(
@@ -150,15 +145,72 @@ def set_feature(cmd,
         except Exception as exception:
             raise CLIError(str(exception))
     raise CLIError(
-        "Fail to set the key '{}' due to a conflicting operation.".format(key))
+        "Failed to set the feature flag '{}' due to a conflicting operation.".format(key))
+
+
+def delete_feature(cmd,
+                feature,
+                name=None,
+                label=None,
+                yes=False,
+                connection_string=None):
+    connection_string = resolve_connection_string(cmd, name, connection_string)
+    azconfig_client = AzconfigClient(connection_string)
+    content_type = FEATURE_FLAG_CONTENT_TYPE
+
+    delete_one_version_message = "Are you sure you want to delete the feature '{}'".format(feature)
+    confirmation_message = delete_one_version_message
+    user_confirmation(confirmation_message, yes)
+
+    try:
+        retrieved_keyvalues = __list_all_keyvalues( cmd,
+                                                    feature=feature, 
+                                                    name=name,
+                                                    label=label, 
+                                                    content_type=content_type, 
+                                                    connection_string=connection_string)
+    except HTTPException as exception:
+        raise CLIError('Delete operation failed. ' + str(exception))
+
+    deleted_kv = []
+    not_deleted_kv = []
+    http_exception = None
+    for entry in retrieved_keyvalues:
+        try:
+            deleted_kv.append(azconfig_client.delete_keyvalue(entry, ModifyKeyValueOptions()))
+        except HTTPException as exception:
+            not_deleted_kv.append(entry.__dict__)
+            http_exception = exception
+        except Exception as exception:
+            raise CLIError(str(exception))
+
+    if not_deleted_kv:
+        if deleted_kv:
+            # Log partial success - display feature flags that failed to be deleted
+            logger.error('Delete operation partially succeeded. Unable to delete the following keys: \n')
+            not_deleted_ff_display = []
+            for failed_kv in not_deleted_kv:
+                failed_ff = _featuremodels.map_keyvalue_to_featureflagdisplay(failed_kv, show_conditions=False)
+                not_deleted_ff_display.append(failed_ff)
+                logger.error(json.dumps(failed_ff.__dict__, indent=2, sort_keys=True))
+        else:
+            raise CLIError('Delete operation failed.' + str(http_exception))
+    
+    # Convert result list of KeyValue to ist of FeatureFlagDisplay
+    deleted_ff_display = []
+    for success_kv in deleted_kv:
+        success_ff = _featuremodels.map_keyvalue_to_featureflagdisplay(success_kv, show_conditions=False)
+        deleted_ff_display.append(success_ff)
+    
+    return deleted_ff_display
 
 
 def show_feature(cmd,
-            feature,
-            name=None,
-            label=None,
-            fields=None,
-            connection_string=None):     
+                feature,
+                name=None,
+                label=None,
+                fields=None,
+                connection_string=None):     
     key = FEATURE_FLAG_PREFIX + feature
     content_type = FEATURE_FLAG_CONTENT_TYPE
     connection_string = resolve_connection_string(cmd, name, connection_string)
@@ -172,13 +224,8 @@ def show_feature(cmd,
         if key_value is None:
             raise CLIError("The Feature Flag does not exist.")
         
-        feature_flag_value = mapper.map_json_to_featureflagvalue(json.loads(key_value.value))
-        feature_flag_display = mapper.map_featureflag_value_to_display(feature_flag_value)
+        feature_flag_display = _featuremodels.map_keyvalue_to_featureflagdisplay(keyvalue=key_value, show_conditions=True)
 
-        # locked and LastModified values come from the KeyValue object
-        feature_flag_display.locked = key_value.locked
-        feature_flag_display.last_modified = key_value.last_modified
-        
         if fields:
             partial_ff = {}
             for field in fields:
@@ -188,3 +235,116 @@ def show_feature(cmd,
             return feature_flag_display
     except Exception as exception:
         raise CLIError(str(exception))
+
+def list_feature(cmd,
+                feature,
+                name=None,
+                label=None,
+                fields=None,
+                connection_string=None,
+                top=None,
+                all_=False):
+    content_type = FEATURE_FLAG_CONTENT_TYPE
+
+    retrieved_keyvalues = __list_all_keyvalues( cmd,
+                                                feature=feature, 
+                                                name=name,
+                                                label=label, 
+                                                content_type=content_type, 
+                                                connection_string=connection_string)
+    retrieved_featureflagdisplay = []
+    for kv in retrieved_keyvalues:
+        retrieved_featureflagdisplay.append(_featuremodels.map_keyvalue_to_featureflagdisplay(keyvalue=kv, show_conditions=True))
+    filtered_ff_display = []
+    count = 0
+
+    if all:
+        top = float('inf')
+    elif top is None:
+        top = 100
+
+    for ff_display in retrieved_featureflagdisplay:
+        if fields:
+            partial_ff = {}
+            for field in fields:
+                partial_ff[field.name.lower()] = ff_display.__dict__[field.name.lower()]
+            filtered_ff_display.append(partial_ff)
+        else:
+            filtered_ff_display.append(ff_display)
+        count += 1
+        if count >= top:
+            break
+    return filtered_ff_display
+
+
+def __list_all_keyvalues(cmd,
+                        feature,
+                        name=None,
+                        label=None,
+                        content_type=None,
+                        connection_string=None):
+    connection_string = resolve_connection_string(cmd, name, connection_string)
+    azconfig_client = AzconfigClient(connection_string)
+
+    
+    # We dont support listing comma separated keys and ned to fail with appropriate error
+    # (?<!\\)    Matches if the preceding character is not a backslash
+    # (?:\\\\)*  Matches any number of occurrences of two backslashes
+    # ,          Matches a comma
+    unescaped_comma_regex = re.compile(r'(?<!\\)(?:\\\\)*,')
+    if unescaped_comma_regex.search(feature):
+        raise CLIError("Comma separated feature names are not supported. Please provide escaped string if your feature name contains comma. \nSee \"az appconfig feature list -h\" for correct usage.")
+    
+    # Filtering keys on these patterns needs to happen on client side after getting all keys
+    # If user provides *abc or *abc* or * -> get all feature flags, then filter based on the ID (feature flag name) of results
+    custom_key_pattern = "*"
+    if feature.startswith("*"):
+        custom_key_pattern = "*"
+    else:
+        custom_key_pattern = feature
+
+    internal_key = FEATURE_FLAG_PREFIX + custom_key_pattern
+
+    # If user has specified fields, we still get all the fields and then filter what we need from the response. 
+    query_option = QueryKeyValueCollectionOptions(key_filter=internal_key,
+                                                  label_filter=QueryKeyValueCollectionOptions.empty_label if label is None else label,
+                                                  content_type=content_type,
+                                                  fields=None)
+    try:
+        retrieved_kv = azconfig_client.get_keyvalues(query_option)
+        if custom_key_pattern == feature:
+            return retrieved_kv
+        return __custom_key_filtering(retrieved_kv=retrieved_kv, user_key_filter=feature)
+    except Exception as exception:
+        raise CLIError(str(exception))
+
+
+def __custom_key_filtering(retrieved_kv, user_key_filter):
+    # Client side Filtering based on user specified pattern
+    filtered_kv = []
+
+    # User requested to view all Feature Flags
+    if user_key_filter == "*":
+        return retrieved_kv
+
+    # User requested to view Feature Flags that "Contain" certain characters
+    if user_key_filter.startswith("*") and user_key_filter.endswith("*"):
+        for kv in retrieved_kv:
+            internal_key = getattr(kv, 'key')
+            feature_name = internal_key[len(FEATURE_FLAG_PREFIX):]
+            if user_key_filter[1:-1] in feature_name:
+                filtered_kv.append(kv)
+        return filtered_kv
+            
+
+    # User requested to view Feature Flags that "End With" certain characters
+    if user_key_filter.startswith("*"):
+        for kv in retrieved_kv:
+            internal_key = getattr(kv, 'key')
+            feature_name = internal_key[len(FEATURE_FLAG_PREFIX):]
+            if  feature_name.endswith(user_key_filter[1:]):
+                filtered_kv.append(kv)
+        return filtered_kv
+
+    return filtered_kv
+
