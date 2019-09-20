@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import json
 import azure.cli.command_modules.appconfig._azconfig.models as models
 
 
@@ -33,4 +32,3 @@ def __get_value(item, argument):
         return item[argument]
     except (KeyError, TypeError, IndexError):
         return None
-

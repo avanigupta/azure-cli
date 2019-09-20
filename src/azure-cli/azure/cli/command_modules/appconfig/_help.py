@@ -220,6 +220,30 @@ helps['appconfig kv unlock'] = """
             az appconfig kv unlock --connection-string Endpoint=https://contoso.azconfig.io;Id=xxx;Secret=xxx --key color --label test --yes
     """
 
+helps['appconfig feature set'] = """
+    type: command
+    short-summary: Set a feature flag.
+    examples:
+        - name: Set a feature flag with label MyLabel.
+          text:
+            az appconfig feature set -n MyAppConfiguration --feature color --label MyLabel 
+        - name: Set a feature flag with null label using connection string and set a description.
+          text:
+            az appconfig feature set --connection-string Endpoint=https://contoso.azconfig.io;Id=xxx;Secret=xxx --feature color --description "This is a colorful feature"
+    """
+
+helps['appconfig feature delete'] = """
+    type: command
+    short-summary: Delete feature flag.
+    examples:
+        - name: Delete a feature using App Configuration name without confirmation.
+          text:
+            az appconfig feature delete -n MyAppConfiguration --feature color --label MyLabel --yes
+        - name: Delete a feature using connection string.
+          text:
+            az appconfig feature delete --connection-string Endpoint=https://contoso.azconfig.io;Id=xxx;Secret=xxx --feature color --label MyLabel
+    """
+
 helps['appconfig feature show'] = """
     type: command
     short-summary: Show all attributes of a feature flag.
@@ -231,15 +255,21 @@ helps['appconfig feature show'] = """
           text:
             az appconfig feature show --connection-string Endpoint=https://contoso.azconfig.io;Id=xxx;Secret=xxx --feature color --fields key locked conditions state
     """
-    
-helps['appconfig feature set'] = """
+
+helps['appconfig feature list'] = """
     type: command
-    short-summary: Set a feature flag.
+    short-summary: List feature flags.
     examples:
-        - name: Set a feature flag with label MyLabel.
+        - name: List all feature flags.
           text:
-            az appconfig feature set -n MyAppConfiguration --feature color --label MyLabel 
-        - name: Set a feature flag with null label using connection string and set a description.
+            az appconfig feature list -n MyAppConfiguration
+        - name: List a specfic feature for any label start with v1. using connection string.
           text:
-            az appconfig feature set --connection-string Endpoint=https://contoso.azconfig.io;Id=xxx;Secret=xxx --feature color --description "This is a colorful feature"
+            az appconfig feature list --feature color --connection-string Endpoint=https://contoso.azconfig.io;Id=xxx;Secret=xxx --label v1.*
+        - name: List all features with any labels and query only key, state and conditions.
+          text:
+            az appconfig feature list --connection-string Endpoint=https://contoso.azconfig.io;Id=xxx;Secret=xxx --fields key state conditions
+        - name: List 150 feature flags with any labels.
+          text:
+            az appconfig feature list --connection-string Endpoint=https://contoso.azconfig.io;Id=xxx;Secret=xxx  --top 150
     """

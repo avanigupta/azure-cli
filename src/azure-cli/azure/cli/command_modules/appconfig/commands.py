@@ -75,3 +75,7 @@ def load_command_table(self, _):
         g.command('delete', 'delete_feature')
         g.command('show', 'show_feature')
         g.command('list', 'list_feature')
+        g.command('lock', 'lock_feature')
+        g.command('unlock', 'unlock_feature')
+        g.command('enable', 'enable_feature')
+        g.command('disable', 'disable_feature')
