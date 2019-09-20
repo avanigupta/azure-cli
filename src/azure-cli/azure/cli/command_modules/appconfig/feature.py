@@ -38,7 +38,7 @@ logger = get_logger(__name__)
 FEATURE_FLAG_PREFIX = ".appconfig.featureflag/"
 FEATURE_FLAG_CONTENT_TYPE = "application/vnd.microsoft.appconfig.ff+json;charset=utf-8"
 
-# Feature commands
+# Feature commands #
 
 def set_feature(cmd,
                 feature,
@@ -298,6 +298,7 @@ def list_feature(cmd,
     except Exception as exception:
         raise CLIError(str(exception))
 
+
 def lock_feature(cmd,
                 feature,
                 name=None,
@@ -481,6 +482,9 @@ def disable_feature(cmd,
         except Exception as exception:
             raise CLIError(str(exception))
     raise CLIError("Failed to Disable the feature flag '{}' due to a conflicting operation.".format(key))
+
+
+# Feature Flter commands #
 
 
 

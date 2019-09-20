@@ -133,10 +133,11 @@ def custom_serialize_conditions(conditions_dict):
     '''
         Helper Function to serialize Conditions
 
-        Input: conditions_dict
-            Dictionary of {str, List[FeatureFilter]}
+        Args: 
+            conditions_dict - Dictionary of {str, List[FeatureFilter]}
 
-        Return: JSON serializable Dictionary
+        Return: 
+            JSON serializable Dictionary
     '''
     featurefilterdict = {}
     if conditions_dict:
@@ -152,13 +153,12 @@ def map_keyvalue_to_featureflagdisplay(keyvalue, show_conditions=True):
     '''
         Helper Function to convert KeyValue object to FeatureFlagDisplay object
 
-        Input: keyvalue
-            KeyValue object to be converted
+        Args: 
+            keyvalue - KeyValue object to be converted
+            show_conditions - Boolean for controlling whether we want to display "Conditions" or not
 
-        Input: show_conditions
-            Boolean for controlling whether we want to display "Conditions" or not
-
-        Return: FeatureFlagDisplay object
+        Return: 
+            FeatureFlagDisplay object
     '''
     key = getattr(keyvalue, 'key')
     feature_name = key[len(FEATURE_FLAG_PREFIX):]
@@ -204,10 +204,11 @@ def map_valuestr_to_valuedict(keyvalue):
         Helper Function to convert value string to a VALID value dictionary.
         Throws Exception if value is invalid.
         
-        Input: keyvalue
-            KeyValue object to be converted
+        Args: 
+            keyvalue - KeyValue object to be converted
 
-        Return: Valid value dictionary
+        Return: 
+            Valid value dictionary
 
         Raises: 
             UnsupportedValuesException: raised when feature flag value is missing required fields or contains other invalid fields
@@ -244,9 +245,20 @@ def map_valuestr_to_valuedict(keyvalue):
     return feature_flag_value
 
 
-def map_json_to_featurefilter(json_object):
-    featurefilters = FeatureFilter(__get_value(json_object, 'name'),
-                                    __get_value(json_object, 'parameters'))
+def map_value_to_featurefilter(value_dict):
+    '''
+        Helper Function to extract Feature Filters from KeyValue->Value dictionary
+
+        Args: 
+            value_dict - value dictionary 
+
+        Return: 
+            "Conditions" dictionary containing all filters 
+    '''
+
+    
+    featurefilters = FeatureFilter(__get_value(value_dict, 'name'),
+                                    __get_value(value_dict, 'parameters'))
     return featurefilters
 
 

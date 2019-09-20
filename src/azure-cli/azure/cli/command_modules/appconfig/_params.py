@@ -183,3 +183,9 @@ def load_arguments(self, _):
     with self.argument_context('appconfig feature disable') as c:
         c.argument('feature', help='Key of the Feature to be disabled.')
         c.argument('label', help="If no label specified, disable the feature flag with null label by default.")
+
+    with self.argument_context('appconfig feature filter add') as c:
+        c.argument('feature', help='Name of the Feature to which you want to add the filter.')
+        c.argument('label', help="If no label specified, add to the feature flag with null label by default.")
+        c.argument('filterName', help='Name of the Filter to be added.')
+        c.argument('filterParameters', arg_type=tags_type)
