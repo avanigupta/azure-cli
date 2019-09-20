@@ -28,7 +28,7 @@ from ._azconfig.models import (KeyValue,
                                QueryKeyValueCollectionOptions,
                                QueryKeyValueOptions)
 from ._featuremodels import (map_keyvalue_to_featureflagdisplay,
-                            validate_and_map_valuestr_to_valuedict,
+                            map_valuestr_to_valuedict,
                             UnsupportedValuesException,
                             InvalidJsonException)
 
@@ -120,7 +120,7 @@ def set_feature(cmd,
                 # if it's invalid, we rethrow the exception that contains detailed message
                 # For all other exceptions, we let the outer try/except handle it.
                 try:
-                    value = validate_and_map_valuestr_to_valuedict(retrieved_kv)
+                    value = map_valuestr_to_valuedict(retrieved_kv)
                 except (UnsupportedValuesException, InvalidJsonException) as exception:
                     raise ValueError(f"Invalid Value found for Feature '{feature}'. Aborting operation\n" + str(exception))
                     
@@ -254,7 +254,7 @@ def show_feature(cmd,
 
 
 def list_feature(cmd,
-                feature,
+                feature=None,
                 name=None,
                 label=None,
                 fields=None,
@@ -262,6 +262,7 @@ def list_feature(cmd,
                 top=None,
                 all_=False):
     try:
+        feature = '*' if feature is None else feature
         retrieved_keyvalues = __list_all_keyvalues(cmd,
                                                     feature=feature, 
                                                     name=name,
@@ -396,7 +397,7 @@ def enable_feature(cmd,
                 # if it's invalid, we rethrow the exception that contains detailed message
                 # For all other exceptions, we let the outer try/except handle it.
                 try:
-                    value = validate_and_map_valuestr_to_valuedict(retrieved_kv)
+                    value = map_valuestr_to_valuedict(retrieved_kv)
                 except (UnsupportedValuesException, InvalidJsonException) as exception:
                     raise ValueError(f"Invalid Value found for Feature '{feature}'. Aborting operation\n" + str(exception))
                     
@@ -450,7 +451,7 @@ def disable_feature(cmd,
                 # if it's invalid, we rethrow the exception that contains detailed message
                 # For all other exceptions, we let the outer try/except handle it.
                 try:
-                    value = validate_and_map_valuestr_to_valuedict(retrieved_kv)
+                    value = map_valuestr_to_valuedict(retrieved_kv)
                 except (UnsupportedValuesException, InvalidJsonException) as exception:
                     raise ValueError(f"Invalid Value found for Feature '{feature}'. Aborting operation\n" + str(exception))
 

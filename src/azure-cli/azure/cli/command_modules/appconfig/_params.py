@@ -167,3 +167,19 @@ def load_arguments(self, _):
         c.argument('feature', help='Key of the Feature to be listed. Support star sign as filters, for instance * means all key and abc* means keys with abc as prefix. Similarly, *abc and *abc* are also supported. Comma separated keys are not supported. Please provide escaped string if your feature name contains comma.')
         c.argument('label', help="If no label specified, list the feature flag with null label by default. Support star sign as filters, for instance * means all key and abc* means keys with abc as prefix. Similarly, *abc and *abc* are also supported.")
         c.argument('fields', arg_type=feature_fields_arg_type)
+
+    with self.argument_context('appconfig feature lock') as c:
+        c.argument('feature', help='Key of the Feature to be locked.')
+        c.argument('label', help="If no label specified, lock the feature flag with null label by default.")
+
+    with self.argument_context('appconfig feature unlock') as c:
+        c.argument('feature', help='Key of the Feature to be unlocked.')
+        c.argument('label', help="If no label specified, unlock the feature flag with null label by default.")
+
+    with self.argument_context('appconfig feature enable') as c:
+        c.argument('feature', help='Key of the Feature to be enabled.')
+        c.argument('label', help="If no label specified, enable the feature flag with null label by default.")
+
+    with self.argument_context('appconfig feature disable') as c:
+        c.argument('feature', help='Key of the Feature to be disabled.')
+        c.argument('label', help="If no label specified, disable the feature flag with null label by default.")

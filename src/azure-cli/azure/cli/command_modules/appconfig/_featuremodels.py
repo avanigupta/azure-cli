@@ -160,22 +160,14 @@ def map_keyvalue_to_featureflagdisplay(keyvalue, show_conditions=True):
 
         Return: FeatureFlagDisplay object
     '''
-
-    # Key attribute not found should always raise error
-    try:
-        key = getattr(keyvalue, 'key')
-        if key:
-            feature_name = key[len(FEATURE_FLAG_PREFIX):]
-    except AttributeError as exception:
-        error_msg = "Could not find 'key' attribute in the Key-Value data.\n"
-        logger.debug(error_msg + str(keyvalue))
-        raise AttributeError(error_msg + str(exception))
+    key = getattr(keyvalue, 'key')
+    feature_name = key[len(FEATURE_FLAG_PREFIX):]
 
     # we check that value retrieved is a valid json and only has the fields supported by backend. 
     # if it's invalid, we throw exception 
     # For all other exceptions, we let the outer try/except handle it.
     try:
-        feature_flag_value = validate_and_map_valuestr_to_valuedict(keyvalue)
+        feature_flag_value = map_valuestr_to_valuedict(keyvalue)
     except (UnsupportedValuesException, InvalidJsonException) as exception:
         raise ValueError(f"Invalid Value found for Key '{key}'. Aborting operation\n" + str(exception))
         
@@ -207,7 +199,7 @@ def map_keyvalue_to_featureflagdisplay(keyvalue, show_conditions=True):
     return feature_flag_display
 
 
-def validate_and_map_valuestr_to_valuedict(keyvalue):
+def map_valuestr_to_valuedict(keyvalue):
     '''
         Helper Function to convert value string to a VALID value dictionary.
         Throws Exception if value is invalid.
@@ -216,20 +208,16 @@ def validate_and_map_valuestr_to_valuedict(keyvalue):
             KeyValue object to be converted
 
         Return: Valid value dictionary
+
+        Raises: 
+            UnsupportedValuesException: raised when feature flag value is missing required fields or contains other invalid fields
+            InvalidJsonException: raised when JSON decode error is thrown because value string cannot be deserialized to a valid JSON
     '''
 
     feature_flag_value = {}
+    key = getattr(keyvalue, 'key')
+    feature_name = key[len(FEATURE_FLAG_PREFIX):]
     
-    # Key attribute not found should always raise error
-    try:
-        key = getattr(keyvalue, 'key')
-        if key:
-            feature_name = key[len(FEATURE_FLAG_PREFIX):]
-    except AttributeError as exception:
-        error_msg = "Could not find 'key' attribute in the Key-Value data.\n"
-        logger.debug(error_msg + str(keyvalue))
-        raise AttributeError(error_msg + str(exception))
-
     valuestr = getattr(keyvalue, 'value', "")
     if valuestr:
         try:

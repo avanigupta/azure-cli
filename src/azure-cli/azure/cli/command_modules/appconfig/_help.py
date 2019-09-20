@@ -273,3 +273,51 @@ helps['appconfig feature list'] = """
           text:
             az appconfig feature list --connection-string Endpoint=https://contoso.azconfig.io;Id=xxx;Secret=xxx  --top 150
     """
+
+helps['appconfig feature lock'] = """
+    type: command
+    short-summary: Lock a feature flag to prohibit write operations.
+    examples:
+        - name: Lock a feature using App Configuration name.
+          text:
+            az appconfig feature lock -n MyAppConfiguration --feature color --label test
+        - name: Force locking a feature using connection string.
+          text:
+            az appconfig feature lock --connection-string Endpoint=https://contoso.azconfig.io;Id=xxx;Secret=xxx --feature color --label test --yes
+    """
+
+helps['appconfig feature unlock'] = """
+    type: command
+    short-summary: Unlock a feature to gain write operations.
+    examples:
+        - name: Unlock a feature using App Configuration name.
+          text:
+            az appconfig feature unlock -n MyAppConfiguration --feature color --label test
+        - name: Force unlocking a feature using connection string.
+          text:
+            az appconfig feature unlock --connection-string Endpoint=https://contoso.azconfig.io;Id=xxx;Secret=xxx --feature color --label test --yes
+    """
+
+helps['appconfig feature enable'] = """
+    type: command
+    short-summary: Enable a feature flag to turn it ON for use.
+    examples:
+        - name: enable a feature using App Configuration name.
+          text:
+            az appconfig feature enable -n MyAppConfiguration --feature color --label test
+        - name: Force enabling a feature using connection string.
+          text:
+            az appconfig feature enable --connection-string Endpoint=https://contoso.azconfig.io;Id=xxx;Secret=xxx --feature color --label test --yes
+    """
+
+helps['appconfig feature disable'] = """
+    type: command
+    short-summary: Disable a feature flag to turn it OFF for use.
+    examples:
+        - name: disable a feature using App Configuration name.
+          text:
+            az appconfig feature disable -n MyAppConfiguration --feature color --label test
+        - name: Force disabling a feature using connection string.
+          text:
+            az appconfig feature disable --connection-string Endpoint=https://contoso.azconfig.io;Id=xxx;Secret=xxx --feature color --label test --yes
+    """
