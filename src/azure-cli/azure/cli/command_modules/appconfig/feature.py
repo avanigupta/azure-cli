@@ -298,7 +298,10 @@ def list_feature(cmd,
     except Exception as exception:
         raise CLIError(str(exception))
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> dev
 def lock_feature(cmd,
                 feature,
                 name=None,
