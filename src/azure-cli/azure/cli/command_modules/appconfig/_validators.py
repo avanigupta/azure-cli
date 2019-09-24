@@ -110,3 +110,19 @@ def validate_feature_query_fields(namespace):
                 if field.lower() == feature_query_field.name.lower():
                     fields.append(feature_query_field)
         namespace.fields = fields
+
+def validate_filter_parameters(namespace):
+    """ Extracts multiple space-separated filter paramters in name[=value] format """
+    if isinstance(namespace.filterParameters, list):
+        filter_parameters_dict = {}
+        for item in namespace.filterParameters:
+            filter_parameters_dict.update(validate_filter_parameter(item))
+        namespace.filterParameters = filter_parameters_dict
+
+def validate_filter_parameter(string):
+    """ Extracts a single filter parameter in name[=value] format """
+    result = {}
+    if string:
+        comps = string.split('=', 1)
+        result = {comps[0]: comps[1]} if len(comps) > 1 else {string: ''}
+    return result

@@ -9,7 +9,8 @@ from ._client_factory import cf_configstore, cf_configstore_operations
 from ._format import (configstore_credential_format,
                       configstore_output_format,
                       keyvalue_entry_format,
-                      featureflag_entry_format)
+                      featureflag_entry_format,
+                      featurefilter_entry_format)
 
 
 def load_command_table(self, _):
@@ -90,4 +91,5 @@ def load_command_table(self, _):
         g.command('add', 'add_filter')
         g.command('delete', 'delete_filter')
         g.command('show', 'show_filter')
+        g.command('list', 'list_filter')
         g.command('clear', 'clear_filter')
