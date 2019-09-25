@@ -35,12 +35,12 @@ def load_arguments(self, _):
         nargs='+',
         help='Customize output fields for Feature Flags.',
         validator=validate_feature_query_fields,
-        arg_type=get_enum_type(['key', 'label', 'locked' ,'last_modified', 'state', 'description', 'conditions'])
+        arg_type=get_enum_type(['key', 'label', 'locked', 'last_modified', 'state', 'description', 'conditions'])
     )
     filter_parameters_arg_type = CLIArgumentType(
-    validator=validate_filter_parameters,
-    help="space-separated filter parameters in 'name[=value]' format.",
-    nargs='*'
+        validator=validate_filter_parameters,
+        help="space-separated filter parameters in 'name[=value]' format.",
+        nargs='*'
     )
     datatime_filter_arg_type = CLIArgumentType(
         validator=validate_datetime,
@@ -216,4 +216,4 @@ def load_arguments(self, _):
     with self.argument_context('appconfig feature filter clear') as c:
         c.argument('feature', help='Name of the feature whose filters need to be deleted.')
         c.argument('label', help="If no label specified, clear filters from the feature flag with null label by default.")
-
+        

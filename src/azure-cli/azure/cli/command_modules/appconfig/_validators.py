@@ -117,14 +117,13 @@ def validate_filter_parameters(namespace):
         filter_parameters_dict = {}
         for item in namespace.filterParameters:
             param = validate_filter_parameter(item)
-            
             # If param name already exists, convert the values to a list
             if param:
                 name, val = next(iter(param.items()))
 
                 if name in filter_parameters_dict:
                     old_param = filter_parameters_dict[name]
-                    if isinstance(old_param, list): 
+                    if isinstance(old_param, list):
                         old_param.append(val)
                     else:
                         filter_parameters_dict[name] = [old_param, val]
