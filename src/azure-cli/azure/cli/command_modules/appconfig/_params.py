@@ -197,23 +197,23 @@ def load_arguments(self, _):
         c.argument('filterParameters', arg_type=filter_parameters_arg_type)
         c.argument('index', help='Zero-based index in the list of filters where you want to insert the new filter.')
 
- with self.argument_context('appconfig feature filter delete') as c:
+    with self.argument_context('appconfig feature filter delete') as c:
         c.argument('feature', help='Name of the feature from which you want to delete the filter.')
         c.argument('label', help="If no label specified, delete from the feature flag with null label by default.")
         c.argument('filterName', help='Name of the filter to be deleted.')
         c.argument('index', help='Zero-based index of the filter to be deleted in case ther are multiple instances with same filter name.')
 
- with self.argument_context('appconfig feature filter show') as c:
+    with self.argument_context('appconfig feature filter show') as c:
         c.argument('feature', help='Name of the feature which contains the filter.')
         c.argument('label', help="If no label specified, show the feature flag with null label by default.")
         c.argument('filterName', help='Name of the filter to be displayed.')
         c.argument('index', help='Zero-based index of the filter to be displayed in case ther are multiple instances with same filter name.')
 
- with self.argument_context('appconfig feature filter list') as c:
+    with self.argument_context('appconfig feature filter list') as c:
         c.argument('feature', help='Name of the feature whose filters you want to be displayed.')
         c.argument('label', help="If no label specified, display filters from the feature flag with null label by default.")
 
- with self.argument_context('appconfig feature filter clear') as c:
+    with self.argument_context('appconfig feature filter clear') as c:
         c.argument('feature', help='Name of the feature whose filters need to be deleted.')
         c.argument('label', help="If no label specified, clear filters from the feature flag with null label by default.")
 

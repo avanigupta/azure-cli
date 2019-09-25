@@ -561,8 +561,7 @@ def delete_filter(cmd,
 
                 if match_index and len(match_index) > 1:
                     # If user has specified index, we use it as secondary check to delete a unique filter 
-                    if 0 <= index < len(feature_filters):
-                        if feature_filters[index].get('name',"").lower() == filterName.lower():
+                    if 0 <= index < len(feature_filters) and feature_filters[index].get('name',"").lower() == filterName.lower():
                             # create a deep copy of the filter to display to the user after deletion
                             display_filter = copy.deepcopy(feature_filters[index])
 
@@ -570,9 +569,9 @@ def delete_filter(cmd,
                             user_confirmation(confirmation_message, yes)
 
                             del feature_filters[index]
-                        else:
-                            error_msg = f"Feature '{feature}' contains multiple instances of filter '{filterName}'. For resolving this conflict, run the command again with the filter name and zero-based index of the filter you want to delete.\n"
-                            raise CLIError(str(error_msg))
+                    else:
+                        error_msg = f"Feature '{feature}' contains multiple instances of filter '{filterName}'. For resolving this conflict, run the command again with the filter name and zero-based index of the filter you want to delete.\n"
+                        raise CLIError(str(error_msg))
                 
                 elif match_index and len(match_index) == 1:
                     display_filter = copy.deepcopy(feature_filters[match_index[0]])
@@ -670,7 +669,7 @@ def list_filter(cmd,
         feature_filters = map_valuestr_to_featurefilter_list(getattr(retrieved_kv, 'value', ""))
         
         if all:
-            top = float('inf')
+            top = len(feature_filters)
         elif top is None:
             top = 100
        

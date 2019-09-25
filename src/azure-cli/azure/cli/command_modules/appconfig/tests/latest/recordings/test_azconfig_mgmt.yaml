@@ -25,18 +25,18 @@ interactions:
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores/MgmtTest000002?api-version=2019-02-01-preview
   response:
     body:
-      string: '{"type":"Microsoft.AppConfiguration/configurationStores","properties":{"provisioningState":"Creating","creationDate":"2019-09-20T01:17:56.7952952+00:00","endpoint":"https://MgmtTest000002.azconfig.io"},"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores/MgmtTest000002","name":"MgmtTest000002","location":"eastus","tags":{}}'
+      string: '{"type":"Microsoft.AppConfiguration/configurationStores","properties":{"provisioningState":"Creating","creationDate":"2019-09-25T22:03:46.492494+00:00","endpoint":"https://MgmtTest000002.azconfig.io"},"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores/MgmtTest000002","name":"MgmtTest000002","location":"eastus","tags":{}}'
     headers:
       azure-asyncoperation:
-      - https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/providers/Microsoft.AppConfiguration/locations/eastus/operationsStatus/ea9c64dc-9d52-2869-1c19-3cfd1f3ee725?api-version=2019-02-01-preview
+      - https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/providers/Microsoft.AppConfiguration/locations/eastus/operationsStatus/c466591d-3d77-84a2-5430-25132d34405f?api-version=2019-02-01-preview
       cache-control:
       - no-cache
       content-length:
-      - '508'
+      - '507'
       content-type:
       - application/json; charset=utf-8
       date:
-      - Fri, 20 Sep 2019 01:17:56 GMT
+      - Wed, 25 Sep 2019 22:03:46 GMT
       expires:
       - '-1'
       pragma:
@@ -69,13 +69,13 @@ interactions:
       - python/3.7.4 (Windows-10-10.0.18362-SP0) msrest/0.6.10 msrest_azure/0.6.1
         azure-mgmt-appconfiguration/0.1.0 Azure-SDK-For-Python AZURECLI/2.0.73
     method: GET
-    uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/providers/Microsoft.AppConfiguration/locations/eastus/operationsStatus/ea9c64dc-9d52-2869-1c19-3cfd1f3ee725?api-version=2019-02-01-preview
+    uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/providers/Microsoft.AppConfiguration/locations/eastus/operationsStatus/c466591d-3d77-84a2-5430-25132d34405f?api-version=2019-02-01-preview
   response:
     body:
-      string: '{"id":"/subscriptions/00000000-0000-0000-0000-000000000000/providers/Microsoft.AppConfiguration/locations/eastus/operationsStatus/ea9c64dc-9d52-2869-1c19-3cfd1f3ee725","name":"ea9c64dc-9d52-2869-1c19-3cfd1f3ee725","status":"Succeeded","error":null}'
+      string: '{"id":"/subscriptions/00000000-0000-0000-0000-000000000000/providers/Microsoft.AppConfiguration/locations/eastus/operationsStatus/c466591d-3d77-84a2-5430-25132d34405f","name":"c466591d-3d77-84a2-5430-25132d34405f","status":"Succeeded","error":null}'
     headers:
       azure-asyncoperation:
-      - https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/providers/Microsoft.AppConfiguration/locations/eastus/operationsStatus/ea9c64dc-9d52-2869-1c19-3cfd1f3ee725?api-version=2019-02-01-preview
+      - https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/providers/Microsoft.AppConfiguration/locations/eastus/operationsStatus/c466591d-3d77-84a2-5430-25132d34405f?api-version=2019-02-01-preview
       cache-control:
       - no-cache
       content-length:
@@ -83,7 +83,7 @@ interactions:
       content-type:
       - application/json; charset=utf-8
       date:
-      - Fri, 20 Sep 2019 01:18:06 GMT
+      - Wed, 25 Sep 2019 22:03:56 GMT
       expires:
       - '-1'
       pragma:
@@ -121,7 +121,7 @@ interactions:
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores/MgmtTest000002?api-version=2019-02-01-preview
   response:
     body:
-      string: '{"type":"Microsoft.AppConfiguration/configurationStores","properties":{"provisioningState":"Succeeded","creationDate":"2019-09-20T01:17:58+00:00","endpoint":"https://mgmttestmkjorvkxaxnkjaso.azconfig.io"},"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores/mgmttestmkjorvkxaxnkjaso","name":"MgmtTest000002","location":"eastus","tags":{}}'
+      string: '{"type":"Microsoft.AppConfiguration/configurationStores","properties":{"provisioningState":"Succeeded","creationDate":"2019-09-25T22:03:47+00:00","endpoint":"https://mgmttestmfhe5fcesyhwtwz5.azconfig.io"},"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores/mgmttestmfhe5fcesyhwtwz5","name":"MgmtTest000002","location":"eastus","tags":{}}'
     headers:
       cache-control:
       - no-cache
@@ -130,9 +130,9 @@ interactions:
       content-type:
       - application/json; charset=utf-8
       date:
-      - Fri, 20 Sep 2019 01:18:06 GMT
+      - Wed, 25 Sep 2019 22:03:56 GMT
       etag:
-      - W/"5a00bb8b-0000-0100-0000-5d8428c50000"
+      - W/"380076d3-0000-0100-0000-5d8be4430000"
       expires:
       - '-1'
       pragma:
@@ -172,7 +172,7 @@ interactions:
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores?api-version=2019-02-01-preview
   response:
     body:
-      string: '{"value":[{"type":"Microsoft.AppConfiguration/configurationStores","properties":{"provisioningState":"Succeeded","creationDate":"2019-09-20T01:17:58+00:00","endpoint":"https://mgmttestmkjorvkxaxnkjaso.azconfig.io"},"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores/mgmttestmkjorvkxaxnkjaso","name":"MgmtTest000002","location":"eastus","tags":{}}],"nextLink":"https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores?api-version=2019-02-01-preview&$skipToken=mgmttestmkjorvkxaxnkjaso"}'
+      string: '{"value":[{"type":"Microsoft.AppConfiguration/configurationStores","properties":{"provisioningState":"Succeeded","creationDate":"2019-09-25T22:03:47+00:00","endpoint":"https://mgmttestmfhe5fcesyhwtwz5.azconfig.io"},"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores/mgmttestmfhe5fcesyhwtwz5","name":"MgmtTest000002","location":"eastus","tags":{}}],"nextLink":"https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores?api-version=2019-02-01-preview&$skipToken=mgmttestmfhe5fcesyhwtwz5"}'
     headers:
       cache-control:
       - no-cache
@@ -181,11 +181,11 @@ interactions:
       content-type:
       - application/json; charset=utf-8
       date:
-      - Fri, 20 Sep 2019 01:18:07 GMT
+      - Wed, 25 Sep 2019 22:03:57 GMT
       expires:
       - '-1'
       link:
-      - </subscriptions/77d5ab06-7edd-4eec-bce9-52c11b75bb37/resourceGroups/clitest.rghz72iuajt43fd3qnjeffrh5askh7by3qhqar2kvlr2uctpgnzk34mohdi5a4s36yi/providers/Microsoft.AppConfiguration/configurationStores?api-version=2019-02-01-preview&$skipToken=mgmttestmkjorvkxaxnkjaso>;
+      - </subscriptions/77d5ab06-7edd-4eec-bce9-52c11b75bb37/resourceGroups/clitest.rgx6yrtq5ycdsiw5fxio6w7petjdduyeudust7vppazo5vdri5sgso6roaz4beki4lc/providers/Microsoft.AppConfiguration/configurationStores?api-version=2019-02-01-preview&$skipToken=mgmttestmfhe5fcesyhwtwz5>;
         rel="next"
       pragma:
       - no-cache
@@ -221,7 +221,7 @@ interactions:
       accept-language:
       - en-US
     method: GET
-    uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores?api-version=2019-02-01-preview&$skipToken=mgmttestmkjorvkxaxnkjaso
+    uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores?api-version=2019-02-01-preview&$skipToken=mgmttestmfhe5fcesyhwtwz5
   response:
     body:
       string: '{"value":[],"nextLink":null}'
@@ -233,7 +233,7 @@ interactions:
       content-type:
       - application/json; charset=utf-8
       date:
-      - Fri, 20 Sep 2019 01:18:08 GMT
+      - Wed, 25 Sep 2019 22:03:57 GMT
       expires:
       - '-1'
       pragma:
@@ -273,7 +273,7 @@ interactions:
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores/MgmtTest000002?api-version=2019-02-01-preview
   response:
     body:
-      string: '{"type":"Microsoft.AppConfiguration/configurationStores","properties":{"provisioningState":"Succeeded","creationDate":"2019-09-20T01:17:58+00:00","endpoint":"https://mgmttestmkjorvkxaxnkjaso.azconfig.io"},"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores/mgmttestmkjorvkxaxnkjaso","name":"MgmtTest000002","location":"eastus","tags":{}}'
+      string: '{"type":"Microsoft.AppConfiguration/configurationStores","properties":{"provisioningState":"Succeeded","creationDate":"2019-09-25T22:03:47+00:00","endpoint":"https://mgmttestmfhe5fcesyhwtwz5.azconfig.io"},"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores/mgmttestmfhe5fcesyhwtwz5","name":"MgmtTest000002","location":"eastus","tags":{}}'
     headers:
       cache-control:
       - no-cache
@@ -282,9 +282,9 @@ interactions:
       content-type:
       - application/json; charset=utf-8
       date:
-      - Fri, 20 Sep 2019 01:18:09 GMT
+      - Wed, 25 Sep 2019 22:03:58 GMT
       etag:
-      - W/"5a00bb8b-0000-0100-0000-5d8428c50000"
+      - W/"380076d3-0000-0100-0000-5d8be4430000"
       expires:
       - '-1'
       pragma:
@@ -328,7 +328,7 @@ interactions:
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores/MgmtTest000002?api-version=2019-02-01-preview
   response:
     body:
-      string: '{"type":"Microsoft.AppConfiguration/configurationStores","properties":{"provisioningState":"Succeeded","creationDate":"2019-09-20T01:17:58+00:00","endpoint":"https://mgmttestmkjorvkxaxnkjaso.azconfig.io"},"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores/mgmttestmkjorvkxaxnkjaso","name":"MgmtTest000002","location":"eastus","tags":{"Env":"Prod"}}'
+      string: '{"type":"Microsoft.AppConfiguration/configurationStores","properties":{"provisioningState":"Succeeded","creationDate":"2019-09-25T22:03:47+00:00","endpoint":"https://mgmttestmfhe5fcesyhwtwz5.azconfig.io"},"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.AppConfiguration/configurationStores/mgmttestmfhe5fcesyhwtwz5","name":"MgmtTest000002","location":"eastus","tags":{"Env":"Prod"}}'
     headers:
       cache-control:
       - no-cache
@@ -337,9 +337,9 @@ interactions:
       content-type:
       - application/json; charset=utf-8
       date:
-      - Fri, 20 Sep 2019 01:18:09 GMT
+      - Wed, 25 Sep 2019 22:03:59 GMT
       etag:
-      - W/"5a00ff8b-0000-0100-0000-5d8428d20000"
+      - W/"3800add5-0000-0100-0000-5d8be44f0000"
       expires:
       - '-1'
       pragma:
@@ -355,7 +355,7 @@ interactions:
       x-content-type-options:
       - nosniff
       x-ms-ratelimit-remaining-subscription-writes:
-      - '1199'
+      - '1197'
     status:
       code: 200
       message: OK
@@ -390,7 +390,7 @@ interactions:
       content-length:
       - '0'
       date:
-      - Fri, 20 Sep 2019 01:18:11 GMT
+      - Wed, 25 Sep 2019 22:04:00 GMT
       expires:
       - '-1'
       pragma:
