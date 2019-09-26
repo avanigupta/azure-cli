@@ -7,6 +7,10 @@ Release History
 
 * BREAKING CHANGE: Changed job creation from "job start" to "job create".
 
+**AppConfig**
+
+* Added Feature Management CLI Support
+
 **Compute**
 
 * vmss create: Add --computer-name-prefix parameter to support custom computer name prefix of virtual machines in the VMSS.
