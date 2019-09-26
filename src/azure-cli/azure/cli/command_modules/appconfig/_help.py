@@ -329,6 +329,9 @@ helps['appconfig feature filter add'] = """
         - name: Add a filter for feature 'color' with label MyLabel with name 'MyFilter' and 2 parameters.
           text:
             az appconfig feature filter add -n MyAppConfiguration --feature color --label MyLabel --filterName MyFilter --filterParameters Name=Value Name2=Value2
+        - name: Insert a filter at index 2 (zero-based index) for feature 'color' with label MyLabel and filter name 'MyFilter' with no parameters 
+          text:
+            az appconfig feature filter add -n MyAppConfiguration --feature color --label MyLabel --filterName MyFilter --index 2
         - name:  Add a filter with name 'MyFilter' using connection string.
           text:
             az appconfig feature filter add --connection-string Endpoint=https://contoso.azconfig.io;Id=xxx;Secret=xxx --feature color --filterName MyFilter 
