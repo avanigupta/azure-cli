@@ -801,13 +801,13 @@ def clear_filter(cmd,
             # in map_valuestr_to_valuedict
             feature_filters = feature_flag_value['conditions']['client_filters']
 
-            confirmation_message = f"Are you sure you want to clear all filters for feature '{feature}'?\n"
-            user_confirmation(confirmation_message, yes)
-
             # create a deep copy of the filters to display to the user
             # after deletion
             display_filters = []
             if feature_filters:
+                confirmation_message = f"Are you sure you want to clear all filters for feature '{feature}'?\n"
+                user_confirmation(confirmation_message, yes)
+
                 display_filters = copy.deepcopy(feature_filters)
                 feature_filters.clear()
 
