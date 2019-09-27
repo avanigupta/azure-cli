@@ -10,7 +10,6 @@ import json
 # pylint: disable=too-many-instance-attributes
 
 FEATURE_FLAG_PREFIX = ".appconfig.featureflag/"
-DEFAULT_CONDITIONS = {'client_filters': []}
 
 # Feature Flag Models #
 
@@ -154,9 +153,9 @@ def map_keyvalue_to_featureflag(keyvalue, show_conditions=True):
         Return:
             FeatureFlag object
     '''
-    key = getattr(keyvalue, 'key')
-    feature_name = key[len(FEATURE_FLAG_PREFIX):]
-    valuestr = getattr(keyvalue, 'value', "")
+    internal_key = keyvalue.key
+    feature_name = internal_key[len(FEATURE_FLAG_PREFIX):]
+    valuestr = keyvalue.value
 
     # we check that value retrieved is a valid json and only has the fields supported by backend.
     # if it's invalid, we throw exception
@@ -169,23 +168,23 @@ def map_keyvalue_to_featureflag(keyvalue, show_conditions=True):
             str(exception))
 
     state = FeatureState.OFF
-    if feature_flag_value.get('enabled', False):
+    if feature_flag_value['enabled']:
         state = FeatureState.ON
 
-    conditions = feature_flag_value.get('conditions', DEFAULT_CONDITIONS)
+    conditions = feature_flag_value['conditions']
 
     # if conditions["client_filters"] list is not empty, make state conditional
-    filters = conditions.get("client_filters", [])
+    filters = conditions["client_filters"]
     if filters and state == FeatureState.ON:
         state = FeatureState.CONDITIONAL
 
     feature_flag = FeatureFlag(feature_name,
-                               getattr(keyvalue, 'label', ""),
+                               keyvalue.label,
                                state,
-                               feature_flag_value.get('description', ""),
+                               feature_flag_value['description'],
                                conditions,
-                               getattr(keyvalue, 'locked', False),
-                               getattr(keyvalue, 'last_modified', ""))
+                               keyvalue.locked,
+                               keyvalue.last_modified)
 
     # By Default, we will try to show conditions unless the user has
     # specifically filtered them using --fields arg.
@@ -256,7 +255,7 @@ def map_valuestr_to_featurefilter_list(valuestr):
             valuestr - Value string from KeyValue Object
 
         Return:
-            List containing FeatureFilter Objects
+            List of dictionaries (same attributes as FeatureFilter Object)
     '''
 
     # we check that value retrieved is a valid json and only has the fields supported by backend.
@@ -269,10 +268,7 @@ def map_valuestr_to_featurefilter_list(valuestr):
             f"Invalid value. Aborting operation\n" +
             str(exception))
 
-    conditions = feature_flag_value.get('conditions', DEFAULT_CONDITIONS)
-    filters = conditions.get("client_filters", [])
-
-    return filters
+    return feature_flag_value['conditions']['client_filters']
 
 
 def __get_value(item, argument):

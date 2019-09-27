@@ -79,8 +79,8 @@ def set_feature(cmd,
                 # For all other exceptions, we let the outer try/except handle
                 # it.
                 try:
-                    value = map_valuestr_to_valuedict(
-                        getattr(retrieved_kv, 'value', ""))
+                    value = map_valuestr_to_valuedict(retrieved_kv.value)
+
                 except (UnsupportedValuesException, InvalidJsonException) as exception:
                     raise ValueError(
                         f"Invalid value found for feature '{feature}'. Aborting operation\n" +
@@ -400,15 +400,15 @@ def enable_feature(cmd,
             # For all other exceptions, we let the outer try/except handle
             # it.
             try:
-                value = map_valuestr_to_valuedict(
-                    getattr(retrieved_kv, 'value', ""))
+                value = map_valuestr_to_valuedict(retrieved_kv.value)
+
             except (UnsupportedValuesException, InvalidJsonException) as exception:
                 raise ValueError(
                     f"Invalid value found for feature '{feature}'. Aborting operation\n" +
                     str(exception))
 
             value['enabled'] = True
-            confirmation_message = "Are you sure you want to enable this feature '{}' ?".format(
+            confirmation_message = "Are you sure you want to enable this feature '{}'?".format(
                 feature)
             user_confirmation(confirmation_message, yes)
 
@@ -459,15 +459,15 @@ def disable_feature(cmd,
             # For all other exceptions, we let the outer try/except handle
             # it.
             try:
-                value = map_valuestr_to_valuedict(
-                    getattr(retrieved_kv, 'value', ""))
+                value = map_valuestr_to_valuedict(retrieved_kv.value)
+
             except (UnsupportedValuesException, InvalidJsonException) as exception:
                 raise ValueError(
                     f"Invalid value found for feature '{feature}'. Aborting operation\n" +
                     str(exception))
 
             value['enabled'] = False
-            confirmation_message = "Are you sure you want to disable this feature '{}' ?".format(
+            confirmation_message = "Are you sure you want to disable this feature '{}'?".format(
                 feature)
             user_confirmation(confirmation_message, yes)
 
@@ -476,9 +476,6 @@ def disable_feature(cmd,
 
             return map_keyvalue_to_featureflag(
                 keyvalue=updated_key_value, show_conditions=False)
-
-        except ValueError as exception:
-            raise CLIError(str(exception))
 
         except HTTPException as exception:
             if exception.status == StatusCodes.PRECONDITION_FAILED:
@@ -534,7 +531,8 @@ def add_filter(cmd,
             # it.
             try:
                 feature_flag_value = map_valuestr_to_valuedict(
-                    getattr(retrieved_kv, 'value', ""))
+                    retrieved_kv.value)
+
             except (UnsupportedValuesException, InvalidJsonException) as exception:
                 raise ValueError(
                     f"Invalid value found for feature '{feature}'. Aborting operation\n" +
@@ -542,8 +540,7 @@ def add_filter(cmd,
 
             # These fields will never be missing because we validate that
             # in map_valuestr_to_valuedict
-            conditions = feature_flag_value.get('conditions')
-            feature_filters = conditions.get("client_filters")
+            feature_filters = feature_flag_value['conditions']['client_filters']
 
             entry = json.dumps(new_filter.__dict__, indent=2)
             confirmation_message = "Are you sure you want to add this filter?\n" + entry
@@ -563,9 +560,6 @@ def add_filter(cmd,
                 updated_value=json.dumps(feature_flag_value))
 
             return new_filter
-
-        except ValueError as exception:
-            raise CLIError(str(exception))
 
         except HTTPException as exception:
             if exception.status == StatusCodes.PRECONDITION_FAILED:
@@ -612,7 +606,8 @@ def delete_filter(cmd,
             # it.
             try:
                 feature_flag_value = map_valuestr_to_valuedict(
-                    getattr(retrieved_kv, 'value', ""))
+                    retrieved_kv.value)
+
             except (UnsupportedValuesException, InvalidJsonException) as exception:
                 raise ValueError(
                     f"Invalid value found for feature '{feature}'. Aborting operation\n" +
@@ -620,8 +615,7 @@ def delete_filter(cmd,
 
             # These fields will never be missing because we validate that
             # in map_valuestr_to_valuedict
-            feature_filters = feature_flag_value.get(
-                'conditions').get("client_filters")
+            feature_filters = feature_flag_value['conditions']['client_filters']
 
             display_filter = {}
             match_index = []
@@ -629,41 +623,43 @@ def delete_filter(cmd,
             # get all filters where name matches filterName provided by
             # user
             for idx, ff in enumerate(feature_filters):
-                if ff['name'].lower() == filterName.lower():
+                if ff['name'] == filterName:
+                    if idx == index:
+                        # name and index both match this filter - delete it.
+                        # create a deep copy of the filter to display to the
+                        # user after deletion
+                        display_filter = copy.deepcopy(feature_filters[index])
+
+                        confirmation_message = "Are you sure you want to delete this filter?\n" + \
+                            json.dumps(display_filter, indent=2)
+                        user_confirmation(confirmation_message, yes)
+
+                        del feature_filters[index]
+                        break
+
                     match_index.append(idx)
 
-            if match_index and len(match_index) > 1:
-                # If user has specified index, we use it as secondary check
-                # to delete a unique filter
-                if 0 <= index < len(feature_filters) and feature_filters[index].get(
-                        'name', "").lower() == filterName.lower():
-                    # create a deep copy of the filter to display to the
-                    # user after deletion
-                    display_filter = copy.deepcopy(feature_filters[index])
+            if not display_filter:
+                # this means we have not deleted the filter yet
+
+                if len(match_index) == 1:
+                    display_filter = copy.deepcopy(
+                        feature_filters[match_index[0]])
 
                     confirmation_message = "Are you sure you want to delete this filter?\n" + \
                         json.dumps(display_filter, indent=2)
                     user_confirmation(confirmation_message, yes)
 
-                    del feature_filters[index]
-                else:
+                    del feature_filters[match_index[0]]
+
+                elif len(match_index) > 1:
                     error_msg = f"Feature '{feature}' contains multiple instances of filter '{filterName}'. For resolving this conflict, " + \
                         "run the command again with the filter name and zero-based index of the filter you want to delete.\n"
                     raise CLIError(str(error_msg))
 
-            elif match_index and len(match_index) == 1:
-                display_filter = copy.deepcopy(
-                    feature_filters[match_index[0]])
-
-                confirmation_message = "Are you sure you want to delete this filter?\n" + \
-                    json.dumps(display_filter, indent=2)
-                user_confirmation(confirmation_message, yes)
-
-                del feature_filters[match_index[0]]
-
-            else:
-                raise CLIError(
-                    f"No filter named '{filterName}' was found for feature '{feature}'")
+                else:
+                    raise CLIError(
+                        f"No filter named '{filterName}' was found for feature '{feature}'")
 
             updated_key_value = __update_existing_key_value(
                 azconfig_client,
@@ -671,9 +667,6 @@ def delete_filter(cmd,
                 updated_value=json.dumps(feature_flag_value))
 
             return display_filter
-
-        except ValueError as exception:
-            raise CLIError(str(exception))
 
         except HTTPException as exception:
             if exception.status == StatusCodes.PRECONDITION_FAILED:
@@ -713,23 +706,20 @@ def show_filter(cmd,
                 "The feature flag {} does not exist.".format(feature))
 
         feature_filters = map_valuestr_to_featurefilter_list(
-            getattr(retrieved_kv, 'value', ""))
+            retrieved_kv.value)
         display_filters = []
 
         # If user has specified index, we use it as secondary check to display
         # a unique filter
         if 0 <= index < len(feature_filters):
-            if feature_filters[index].get(
-                    'name', "").lower() == filterName.lower():
+            if feature_filters[index]['name'] == filterName:
                 return feature_filters[index]
             logger.warning(
                 "Could not find filter at the index provided. Ignoring index and trying to find the filter by name.")
 
         # get all filters where name matches filterName provided by user
-        matches = [ff for ff in feature_filters if ff['name'].lower()
-                   == filterName.lower()]
-        if matches:
-            display_filters = matches
+        display_filters = [
+            ff for ff in feature_filters if ff['name'] == filterName]
 
         if not display_filters:
             raise CLIError(
@@ -760,7 +750,7 @@ def list_filter(cmd,
                 "The feature flag {} does not exist.".format(feature))
 
         feature_filters = map_valuestr_to_featurefilter_list(
-            getattr(retrieved_kv, 'value', ""))
+            retrieved_kv.value)
 
         if all_:
             top = len(feature_filters)
@@ -800,7 +790,8 @@ def clear_filter(cmd,
             # it.
             try:
                 feature_flag_value = map_valuestr_to_valuedict(
-                    getattr(retrieved_kv, 'value', ""))
+                    retrieved_kv.value)
+
             except (UnsupportedValuesException, InvalidJsonException) as exception:
                 raise ValueError(
                     f"Invalid value found for feature '{feature}'. Aborting operation\n" +
@@ -808,8 +799,8 @@ def clear_filter(cmd,
 
             # These fields will never be missing because we validate that
             # in map_valuestr_to_valuedict
-            conditions = feature_flag_value.get('conditions')
-            feature_filters = conditions.get("client_filters")
+            feature_filters = feature_flag_value['conditions']['client_filters']
+
             confirmation_message = f"Are you sure you want to clear all filters for feature '{feature}'?\n"
             user_confirmation(confirmation_message, yes)
 
@@ -820,15 +811,12 @@ def clear_filter(cmd,
                 display_filters = copy.deepcopy(feature_filters)
                 feature_filters.clear()
 
-            updated_key_value = __update_existing_key_value(
-                azconfig_client,
-                retrieved_kv=retrieved_kv,
-                updated_value=json.dumps(feature_flag_value))
+                updated_key_value = __update_existing_key_value(
+                    azconfig_client,
+                    retrieved_kv=retrieved_kv,
+                    updated_value=json.dumps(feature_flag_value))
 
             return display_filters
-
-        except ValueError as exception:
-            raise CLIError(str(exception))
 
         except HTTPException as exception:
             if exception.status == StatusCodes.PRECONDITION_FAILED:
@@ -873,8 +861,6 @@ def __update_existing_key_value(azconfig_client,
     try:
         return azconfig_client.update_keyvalue(set_kv, ModifyKeyValueOptions())
 
-    except HTTPException as exception:
-        raise CLIError(str(exception))
     except Exception as exception:
         raise CLIError(str(exception))
 
@@ -944,8 +930,8 @@ def __custom_key_filtering(retrieved_kv, user_key_filter):
     try:
         user_key_pattern_regex = re.compile(r"." + user_key_filter)
         for kv in retrieved_kv:
-            internal_key = getattr(kv, 'key')
-            internal_content_type = getattr(kv, 'content_type')
+            internal_key = kv.key
+            internal_content_type = kv.content_type
             # filter only feature flags
             if internal_key.startswith(
                     FEATURE_FLAG_PREFIX) and internal_content_type == FEATURE_FLAG_CONTENT_TYPE:
