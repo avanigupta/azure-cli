@@ -22,10 +22,7 @@ from ._azconfig.models import (KeyValue,
                                QueryKeyValueCollectionOptions,
                                QueryKeyValueOptions)
 from ._featuremodels import (map_keyvalue_to_featureflag,
-                             map_valuestr_to_valuedict,
-                             map_valuestr_to_featurefilter_list,
-                             UnsupportedValuesException,
-                             InvalidJsonException,
+                             map_keyvalue_to_featureflagvalue,
                              FeatureFilter)
 
 
@@ -74,36 +71,28 @@ def set_feature(cmd,
                     tags,
                     content_type)
             else:
-                # we check that value retrieved is a valid json and only has the fields supported by backend.
-                # if it's invalid, we rethrow the exception that contains detailed message
-                # For all other exceptions, we let the outer try/except handle
-                # it.
-                try:
-                    value = map_valuestr_to_valuedict(retrieved_kv.value)
-
-                except (UnsupportedValuesException, InvalidJsonException) as exception:
-                    raise ValueError(
-                        f"Invalid value found for feature '{feature}'. Aborting operation\n" +
-                        str(exception))
+                # we make sure that value retrieved is a valid json and only has the fields supported by backend.
+                # if it's invalid, we catch appropriate exception that contains detailed message
+                feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
 
                 # User can only update description if the key already exists
-                value['description'] = description
+                feature_flag_value.description = description
                 set_kv = KeyValue(
                     key=key,
                     label=label,
-                    value=json.dumps(value),
+                    value=json.dumps(feature_flag_value.__dict__, default=lambda o: o.__dict__),
                     content_type=content_type,
                     tags=retrieved_kv.tags if retrieved_kv.tags else tags)
                 set_kv.etag = retrieved_kv.etag
                 set_kv.last_modified = retrieved_kv.last_modified
 
-            # Convert KeyValue object to required FeatureFlag format
+            # Convert KeyValue object to required FeatureFlag format for display
             feature_flag = map_keyvalue_to_featureflag(
                 set_kv, show_conditions=True)
             entry = json.dumps(feature_flag.__dict__, indent=2, sort_keys=True)
 
         except Exception as exception:
-            # inner exceptions for ValueError and AttributeError already have customized message
+            # Exceptions for ValueError and AttributeError already have customized message
             # No need to catch specific exception here and customize
             raise CLIError(str(exception))
 
@@ -395,25 +384,17 @@ def enable_feature(cmd,
                 raise CLIError(
                     "The feature flag {} does not exist.".format(feature))
 
-            # we check that value retrieved is a valid json and only has the fields supported by backend.
-            # if it's invalid, we rethrow the exception that contains detailed message
-            # For all other exceptions, we let the outer try/except handle
-            # it.
-            try:
-                value = map_valuestr_to_valuedict(retrieved_kv.value)
+            # we make sure that value retrieved is a valid json and only has the fields supported by backend.
+            # if it's invalid, we catch appropriate exception that contains detailed message
+            feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
 
-            except (UnsupportedValuesException, InvalidJsonException) as exception:
-                raise ValueError(
-                    f"Invalid value found for feature '{feature}'. Aborting operation\n" +
-                    str(exception))
-
-            value['enabled'] = True
+            feature_flag_value.enabled = True
             confirmation_message = "Are you sure you want to enable this feature '{}'?".format(
                 feature)
             user_confirmation(confirmation_message, yes)
 
             updated_key_value = __update_existing_key_value(
-                azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(value))
+                azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(feature_flag_value.__dict__, default=lambda o: o.__dict__))
 
             return map_keyvalue_to_featureflag(
                 keyvalue=updated_key_value, show_conditions=False)
@@ -454,25 +435,17 @@ def disable_feature(cmd,
                 raise CLIError(
                     "The feature flag {} does not exist.".format(feature))
 
-            # we check that value retrieved is a valid json and only has the fields supported by backend.
-            # if it's invalid, we rethrow the exception that contains detailed message
-            # For all other exceptions, we let the outer try/except handle
-            # it.
-            try:
-                value = map_valuestr_to_valuedict(retrieved_kv.value)
+            # we make sure that value retrieved is a valid json and only has the fields supported by backend.
+            # if it's invalid, we catch appropriate exception that contains detailed message
+            feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
 
-            except (UnsupportedValuesException, InvalidJsonException) as exception:
-                raise ValueError(
-                    f"Invalid value found for feature '{feature}'. Aborting operation\n" +
-                    str(exception))
-
-            value['enabled'] = False
+            feature_flag_value.enabled = False
             confirmation_message = "Are you sure you want to disable this feature '{}'?".format(
                 feature)
             user_confirmation(confirmation_message, yes)
 
             updated_key_value = __update_existing_key_value(
-                azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(value))
+                azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(feature_flag_value.__dict__, default=lambda o: o.__dict__))
 
             return map_keyvalue_to_featureflag(
                 keyvalue=updated_key_value, show_conditions=False)
@@ -525,22 +498,10 @@ def add_filter(cmd,
                 raise CLIError(
                     "The feature flag {} does not exist.".format(feature))
 
-            # we check that value retrieved is a valid json and only has the fields supported by backend.
-            # if it's invalid, we rethrow the exception that contains detailed message
-            # For all other exceptions, we let the outer try/except handle
-            # it.
-            try:
-                feature_flag_value = map_valuestr_to_valuedict(
-                    retrieved_kv.value)
-
-            except (UnsupportedValuesException, InvalidJsonException) as exception:
-                raise ValueError(
-                    f"Invalid value found for feature '{feature}'. Aborting operation\n" +
-                    str(exception))
-
-            # These fields will never be missing because we validate that
-            # in map_valuestr_to_valuedict
-            feature_filters = feature_flag_value['conditions']['client_filters']
+            # we make sure that value retrieved is a valid json and only has the fields supported by backend.
+            # if it's invalid, we catch appropriate exception that contains detailed message
+            feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
+            feature_filters = feature_flag_value.conditions['client_filters']
 
             entry = json.dumps(new_filter.__dict__, indent=2)
             confirmation_message = "Are you sure you want to add this filter?\n" + entry
@@ -557,7 +518,7 @@ def add_filter(cmd,
             updated_key_value = __update_existing_key_value(
                 azconfig_client,
                 retrieved_kv=retrieved_kv,
-                updated_value=json.dumps(feature_flag_value))
+                updated_value=json.dumps(feature_flag_value.__dict__, default=lambda o: o.__dict__))
 
             return new_filter
 
@@ -600,30 +561,18 @@ def delete_filter(cmd,
                 raise CLIError(
                     "The feature flag {} does not exist.".format(feature))
 
-            # we check that value retrieved is a valid json and only has the fields supported by backend.
-            # if it's invalid, we rethrow the exception that contains detailed message
-            # For all other exceptions, we let the outer try/except handle
-            # it.
-            try:
-                feature_flag_value = map_valuestr_to_valuedict(
-                    retrieved_kv.value)
-
-            except (UnsupportedValuesException, InvalidJsonException) as exception:
-                raise ValueError(
-                    f"Invalid value found for feature '{feature}'. Aborting operation\n" +
-                    str(exception))
-
-            # These fields will never be missing because we validate that
-            # in map_valuestr_to_valuedict
-            feature_filters = feature_flag_value['conditions']['client_filters']
+            # we make sure that value retrieved is a valid json and only has the fields supported by backend.
+            # if it's invalid, we catch appropriate exception that contains detailed message
+            feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
+            feature_filters = feature_flag_value.conditions['client_filters']
 
             display_filter = {}
             match_index = []
 
             # get all filters where name matches filterName provided by
             # user
-            for idx, ff in enumerate(feature_filters):
-                if ff['name'] == filterName:
+            for idx, feature_filter in enumerate(feature_filters):
+                if feature_filter.name == filterName:
                     if idx == index:
                         # name and index both match this filter - delete it.
                         # create a deep copy of the filter to display to the
@@ -631,7 +580,7 @@ def delete_filter(cmd,
                         display_filter = copy.deepcopy(feature_filters[index])
 
                         confirmation_message = "Are you sure you want to delete this filter?\n" + \
-                            json.dumps(display_filter, indent=2)
+                            json.dumps(display_filter.__dict__, indent=2)
                         user_confirmation(confirmation_message, yes)
 
                         del feature_filters[index]
@@ -647,7 +596,7 @@ def delete_filter(cmd,
                         feature_filters[match_index[0]])
 
                     confirmation_message = "Are you sure you want to delete this filter?\n" + \
-                        json.dumps(display_filter, indent=2)
+                        json.dumps(display_filter.__dict__, indent=2)
                     user_confirmation(confirmation_message, yes)
 
                     del feature_filters[match_index[0]]
@@ -664,7 +613,7 @@ def delete_filter(cmd,
             updated_key_value = __update_existing_key_value(
                 azconfig_client,
                 retrieved_kv=retrieved_kv,
-                updated_value=json.dumps(feature_flag_value))
+                updated_value=json.dumps(feature_flag_value.__dict__, default=lambda o: o.__dict__))
 
             return display_filter
 
@@ -704,22 +653,25 @@ def show_filter(cmd,
         if retrieved_kv is None:
             raise CLIError(
                 "The feature flag {} does not exist.".format(feature))
+        
+        # we make sure that value retrieved is a valid json and only has the fields supported by backend.
+        # if it's invalid, we catch appropriate exception that contains detailed message
+        feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
+        feature_filters = feature_flag_value.conditions['client_filters']
 
-        feature_filters = map_valuestr_to_featurefilter_list(
-            retrieved_kv.value)
         display_filters = []
 
         # If user has specified index, we use it as secondary check to display
         # a unique filter
         if 0 <= index < len(feature_filters):
-            if feature_filters[index]['name'] == filterName:
+            if feature_filters[index].name == filterName:
                 return feature_filters[index]
             logger.warning(
                 "Could not find filter at the index provided. Ignoring index and trying to find the filter by name.")
 
         # get all filters where name matches filterName provided by user
         display_filters = [
-            ff for ff in feature_filters if ff['name'] == filterName]
+            ff for ff in feature_filters if ff.name == filterName]
 
         if not display_filters:
             raise CLIError(
@@ -749,8 +701,10 @@ def list_filter(cmd,
             raise CLIError(
                 "The feature flag {} does not exist.".format(feature))
 
-        feature_filters = map_valuestr_to_featurefilter_list(
-            retrieved_kv.value)
+        # we make sure that value retrieved is a valid json and only has the fields supported by backend.
+        # if it's invalid, we catch appropriate exception that contains detailed message
+        feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
+        feature_filters = feature_flag_value.conditions['client_filters']
 
         if all_:
             top = len(feature_filters)
@@ -784,22 +738,13 @@ def clear_filter(cmd,
                 raise CLIError(
                     "The feature flag {} does not exist.".format(feature))
 
-            # we check that value retrieved is a valid json and only has the fields supported by backend.
-            # if it's invalid, we rethrow the exception that contains detailed message
-            # For all other exceptions, we let the outer try/except handle
-            # it.
-            try:
-                feature_flag_value = map_valuestr_to_valuedict(
-                    retrieved_kv.value)
-
-            except (UnsupportedValuesException, InvalidJsonException) as exception:
-                raise ValueError(
-                    f"Invalid value found for feature '{feature}'. Aborting operation\n" +
-                    str(exception))
+            # we make sure that value retrieved is a valid json and only has the fields supported by backend.
+            # if it's invalid, we catch appropriate exception that contains detailed message
+            feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
 
             # These fields will never be missing because we validate that
-            # in map_valuestr_to_valuedict
-            feature_filters = feature_flag_value['conditions']['client_filters']
+            # in map_keyvalue_to_featureflagvalue
+            feature_filters = feature_flag_value.conditions['client_filters']
 
             # create a deep copy of the filters to display to the user
             # after deletion
@@ -814,7 +759,7 @@ def clear_filter(cmd,
                 updated_key_value = __update_existing_key_value(
                     azconfig_client,
                     retrieved_kv=retrieved_kv,
-                    updated_value=json.dumps(feature_flag_value))
+                    updated_value=json.dumps(feature_flag_value.__dict__, default=lambda o: o.__dict__))
 
             return display_filters
 

@@ -5,10 +5,12 @@
 
 from enum import Enum
 import json
+from knack.log import get_logger
 
 # pylint: disable=too-few-public-methods
 # pylint: disable=too-many-instance-attributes
 
+logger = get_logger(__name__)
 FEATURE_FLAG_PREFIX = ".appconfig.featureflag/"
 
 # Feature Flag Models #
@@ -31,6 +33,45 @@ class FeatureQueryFields(Enum):
     ALL = KEY | LABEL | LAST_MODIFIED | LOCKED | STATE | DESCRIPTION | CONDITIONS
 
 
+class FeatureFlagValue(object):
+    '''
+    Schema of Value inside KeyValue when key is a Feature Flag.
+
+    :ivar str id:
+        ID (key) of the feature.
+    :ivar str description:
+        Description of Feature Flag
+    :ivar bool enabled:
+        Represents if the Feature flag is On/Off/Conditionally On
+    :ivar str label:
+        Label of the entry.
+    :ivar dict {string, FeatureFilter[]} conditions:
+        Dictionary that contains client_filters List (and server_filters List in future)
+    '''
+    def __init__(self, 
+                id, 
+                description=None,
+                enabled=None, 
+                label=None, 
+                conditions=None):
+        self.id = id
+        self.description = description
+        self.enabled = enabled
+        self.label = label
+        self.conditions = conditions
+
+    def __repr__(self):
+        featureflagvalue = {
+            "id": self.id,
+            "description": self.description,
+            "enabled": self.enabled,
+            "label": self.label,
+            "conditions": custom_serialize_conditions(self.conditions)
+        }
+
+        return json.dumps(featureflagvalue, indent=2)
+
+
 class FeatureFlag(object):
     '''
     Feature Flag schema as displayed to the user.
@@ -49,7 +90,7 @@ class FeatureFlag(object):
         A datetime object representing the last time the feature flag was modified.
     :ivar str etag:
         The ETag contains a value that you can use to perform operations.
-    :ivar dict {string, FeatureFilter[]>} conditions:
+    :ivar dict {string, FeatureFilter[]} conditions:
         Dictionary that contains client_filters List (and server_filters List in future)
     '''
 
@@ -69,7 +110,7 @@ class FeatureFlag(object):
         self.last_modified = last_modified
         self.locked = locked
 
-    def __str__(self):
+    def __repr__(self):
         featureflag = {
             "Key": self.key,
             "Label": self.label,
@@ -106,21 +147,6 @@ class FeatureFilter(object):
         }
         return json.dumps(featurefilter, indent=2)
 
-
-# Feature Flag Exceptions #
-
-class InvalidJsonException(ValueError):
-    def __init__(self, message):
-        self.message = message
-        super(InvalidJsonException, self).__init__(message)
-
-
-class UnsupportedValuesException(ValueError):
-    def __init__(self, message):
-        self.message = message
-        super(UnsupportedValuesException, self).__init__(message)
-
-
 # Feature Flag Helper Functions #
 
 def custom_serialize_conditions(conditions_dict):
@@ -134,17 +160,18 @@ def custom_serialize_conditions(conditions_dict):
             JSON serializable Dictionary
     '''
     featurefilterdict = {}
+
     for key, value in conditions_dict.items():
         featurefilters = []
-        for ff in value:
-            featurefilters.append(str(ff))
+        for featurefilter in value:
+            featurefilters.append(str(featurefilter))
         featurefilterdict[key] = featurefilters
     return featurefilterdict
 
 
 def map_keyvalue_to_featureflag(keyvalue, show_conditions=True):
     '''
-        Helper Function to convert KeyValue object to FeatureFlag object
+        Helper Function to convert KeyValue object to FeatureFlag object for display
 
         Args:
             keyvalue - KeyValue object to be converted
@@ -153,35 +180,26 @@ def map_keyvalue_to_featureflag(keyvalue, show_conditions=True):
         Return:
             FeatureFlag object
     '''
-    internal_key = keyvalue.key
-    feature_name = internal_key[len(FEATURE_FLAG_PREFIX):]
-    valuestr = keyvalue.value
+    feature_name = keyvalue.key[len(FEATURE_FLAG_PREFIX):]
 
-    # we check that value retrieved is a valid json and only has the fields supported by backend.
-    # if it's invalid, we throw exception
-    # For all other exceptions, we let the outer try/except handle it.
-    try:
-        feature_flag_value = map_valuestr_to_valuedict(valuestr)
-    except (UnsupportedValuesException, InvalidJsonException) as exception:
-        raise ValueError(
-            f"Invalid value found for feature '{feature_name}'. Aborting operation\n" +
-            str(exception))
+    feature_flag_value = map_keyvalue_to_featureflagvalue(keyvalue)
 
     state = FeatureState.OFF
-    if feature_flag_value['enabled']:
+    if feature_flag_value.enabled:
         state = FeatureState.ON
 
-    conditions = feature_flag_value['conditions']
+    conditions = feature_flag_value.conditions
 
     # if conditions["client_filters"] list is not empty, make state conditional
     filters = conditions["client_filters"]
+
     if filters and state == FeatureState.ON:
         state = FeatureState.CONDITIONAL
 
     feature_flag = FeatureFlag(feature_name,
                                keyvalue.label,
                                state,
-                               feature_flag_value['description'],
+                               feature_flag_value.description,
                                conditions,
                                keyvalue.locked,
                                keyvalue.last_modified)
@@ -195,84 +213,66 @@ def map_keyvalue_to_featureflag(keyvalue, show_conditions=True):
     return feature_flag
 
 
-def map_valuestr_to_valuedict(valuestr):
+def map_keyvalue_to_featureflagvalue(keyvalue):
     '''
-        Helper Function to convert value string to a VALID value dictionary.
-        Throws Exception if value is invalid.
+        Helper Function to convert value string to a valid FeatureFlagValue.
+        Throws Exception if value is an invalid JSON.
 
         Args:
-            valuestr - value string from KeyValue object
+            keyvalue - KeyValue object
 
         Return:
-            Valid value dictionary
-
-        Raises:
-            UnsupportedValuesException: raised when feature flag value is missing required
-                                        fields or contains other invalid fields
-            InvalidJsonException:   raised when JSON decode error is thrown because value
-                                    string cannot be deserialized to a valid JSON
-
+            Valid FeatureFlagValue object
     '''
 
-    feature_flag_value = {}
-    if valuestr:
-        try:
-            # Make sure value string is a valid json
-            feature_flag_value = json.loads(valuestr)
+    feature_flag_dict = {}
+    default_conditions = {'client_filters': []}
 
-            # Make sure value json has all the fields we support in the backend
-            valid_fields = {
-                'id',
-                'description',
-                'enabled',
-                'label',
-                'conditions'}
-            if valid_fields != feature_flag_value.keys():
-                error_msg = f"This feature flag cannot be processed because it is missing " + \
-                            "required values or it contains unsupported values.\n"
-                raise UnsupportedValuesException(
-                    "Invalid value.\n" + error_msg)
+    try:
+        # Make sure value string is a valid json
+        feature_flag_dict = json.loads(keyvalue.value)
+        feature_name = keyvalue.key[len(FEATURE_FLAG_PREFIX):]
 
-        except UnsupportedValuesException as exception:
-            raise UnsupportedValuesException(str(exception))
+        # Make sure value json has all the fields we support in the backend
+        valid_fields = {
+            'id',
+            'description',
+            'enabled',
+            'label',
+            'conditions'}
+        if valid_fields != feature_flag_dict.keys():
+            logger.debug(f"'{feature_name}' feature flag is missing required values or it contains " + \
+                        "unsupported values. Setting missing value to defaults and ignoring unsupported values\n")
 
-        except ValueError as exception:
-            error_msg = f"Unable to decode the following JSON value: \n{valuestr}. \nFull exception: \n{str(exception)}"
-            raise InvalidJsonException("Invalid value.\n" + error_msg)
+        conditions = feature_flag_dict.get('conditions', default_conditions)
+        client_filters = conditions.get('client_filters', [])
+        
+        # Convert all filters to FeatureFilter objects
+        client_filters_list = []
+        for client_filter in client_filters:
+            # If there is a filter, it should always have a name
+            # In case it doesn't, ignore this filter
+            name = client_filter.get('name')
+            if name:
+                params = client_filter.get('parameters', {})
+                client_filters_list.append(FeatureFilter(name, params))
+        conditions['client_filters'] = client_filters_list
 
-        except Exception as exception:
-            error_msg = f"Exception while parsing value:\n{valuestr}\n"
-            raise Exception(error_msg + str(exception))
+        feature_flag_value = FeatureFlagValue(feature_name,
+                                            feature_flag_dict.get('description', ''),
+                                            feature_flag_dict.get('enabled', False),
+                                            keyvalue.label,
+                                            conditions)
+
+    except ValueError as exception:
+        error_msg = f"Invalid value. Unable to decode the following JSON value: \n{keyvalue.value}. \nFull exception: \n{str(exception)}"
+        raise ValueError("Invalid value.\n" + error_msg)
+
+    except Exception as exception:
+        logger.debug(f"Exception while parsing value:\n{keyvalue.value}\n")
+        raise
 
     return feature_flag_value
 
+    
 
-def map_valuestr_to_featurefilter_list(valuestr):
-    '''
-        Helper Function to extract Feature Filters from KeyValue object
-
-        Args:
-            valuestr - Value string from KeyValue Object
-
-        Return:
-            List of dictionaries (same attributes as FeatureFilter Object)
-    '''
-
-    # we check that value retrieved is a valid json and only has the fields supported by backend.
-    # if it's invalid, we throw exception
-    # For all other exceptions, we let the outer try/except handle it.
-    try:
-        feature_flag_value = map_valuestr_to_valuedict(valuestr)
-    except (UnsupportedValuesException, InvalidJsonException) as exception:
-        raise ValueError(
-            f"Invalid value. Aborting operation\n" +
-            str(exception))
-
-    return feature_flag_value['conditions']['client_filters']
-
-
-def __get_value(item, argument):
-    try:
-        return item[argument]
-    except (KeyError, TypeError, IndexError):
-        return None
