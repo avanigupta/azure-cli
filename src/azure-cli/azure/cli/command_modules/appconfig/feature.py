@@ -603,8 +603,10 @@ def delete_filter(cmd,
 
             if not display_filter:
                 # this means we have not deleted the filter yet
-
                 if len(match_index) == 1:
+                    if index != -1:
+                        logger.warning("Found filter '%s' at index '%s'. Ignoring provided index '%s'", filterName, match_index[0], index)
+
                     display_filter = copy.deepcopy(
                         feature_filters[match_index[0]])
 
