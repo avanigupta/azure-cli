@@ -6,12 +6,14 @@
 # pylint: disable=line-too-long
 
 import re
+from knack.log import get_logger
 from knack.util import CLIError
 
 from ._utils import is_valid_connection_string, resolve_resource_group
 from ._azconfig.models import QueryFields
 from ._featuremodels import FeatureQueryFields
 
+logger = get_logger(__name__)
 
 def validate_datetime(namespace):
     ''' valid datetime format:YYYY-MM-DDThh:mm:ssZ '''
@@ -116,25 +118,28 @@ def validate_filter_parameters(namespace):
     if isinstance(namespace.filterParameters, list):
         filter_parameters_dict = {}
         for item in namespace.filterParameters:
-            param = validate_filter_parameter(item)
-            # If param name already exists, convert the values to a list
-            if param:
-                name, val = next(iter(param.items()))
-
-                if name in filter_parameters_dict:
-                    old_param = filter_parameters_dict[name]
-                    if isinstance(old_param, list):
-                        old_param.append(val)
+            param_tuple = validate_filter_parameter(item)
+            if param_tuple:
+                param_name, param_value = param_tuple
+                # If param_name already exists, convert the values to a list
+                if param_name in filter_parameters_dict:
+                    old_param_value = filter_parameters_dict[param_name]
+                    if isinstance(old_param_value, list):
+                        old_param_value.append(param_value)
                     else:
-                        filter_parameters_dict[name] = [old_param, val]
+                        filter_parameters_dict[param_name] = [old_param_value, param_value]
                 else:
-                    filter_parameters_dict.update(param)
+                    filter_parameters_dict.update({param_name: param_value})
         namespace.filterParameters = filter_parameters_dict
 
 def validate_filter_parameter(string):
     """ Extracts a single filter parameter in name[=value] format """
-    result = {}
+    result = ()
     if string:
         comps = string.split('=', 1)
-        result = {comps[0]: comps[1]} if len(comps) > 1 else {string: ''}
+        # Ignore invalid arguments like  '=value' or '='
+        if comps[0]:
+            result = (comps[0], comps[1]) if len(comps) > 1 else (string, '')
+        else:
+            logger.warning(f"Ignoring filter parameter '{string}' because parameter name is empty.")
     return result
