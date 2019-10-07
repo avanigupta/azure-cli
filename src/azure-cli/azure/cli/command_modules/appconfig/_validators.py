@@ -104,6 +104,7 @@ def validate_query_fields(namespace):
                     fields.append(query_field)
         namespace.fields = fields
 
+
 def validate_feature_query_fields(namespace):
     if namespace.fields:
         fields = []
@@ -112,6 +113,7 @@ def validate_feature_query_fields(namespace):
                 if field.lower() == feature_query_field.name.lower():
                     fields.append(feature_query_field)
         namespace.fields = fields
+
 
 def validate_filter_parameters(namespace):
     """ Extracts multiple space-separated filter paramters in name[=value] format """
@@ -132,6 +134,7 @@ def validate_filter_parameters(namespace):
                     filter_parameters_dict.update({param_name: param_value})
         namespace.filterParameters = filter_parameters_dict
 
+
 def validate_filter_parameter(string):
     """ Extracts a single filter parameter in name[=value] format """
     result = ()
@@ -141,5 +144,5 @@ def validate_filter_parameter(string):
         if comps[0]:
             result = (comps[0], comps[1]) if len(comps) > 1 else (string, '')
         else:
-            logger.warning(f"Ignoring filter parameter '{string}' because parameter name is empty.")
+            logger.warning("Ignoring filter parameter '%s' because parameter name is empty.", string)
     return result

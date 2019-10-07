@@ -37,7 +37,7 @@ class FeatureFlagValue(object):
     '''
     Schema of Value inside KeyValue when key is a Feature Flag.
 
-    :ivar str id:
+    :ivar str id_:
         ID (key) of the feature.
     :ivar str description:
         Description of Feature Flag
@@ -48,13 +48,14 @@ class FeatureFlagValue(object):
     :ivar dict {string, FeatureFilter[]} conditions:
         Dictionary that contains client_filters List (and server_filters List in future)
     '''
-    def __init__(self, 
-                id, 
-                description=None,
-                enabled=None, 
-                label=None, 
-                conditions=None):
-        self.id = id
+
+    def __init__(self,
+                 id_,
+                 description=None,
+                 enabled=None,
+                 label=None,
+                 conditions=None):
+        self.id_ = id_
         self.description = description
         self.enabled = enabled
         self.label = label
@@ -62,7 +63,7 @@ class FeatureFlagValue(object):
 
     def __repr__(self):
         featureflagvalue = {
-            "id": self.id,
+            "id": self.id_,
             "description": self.description,
             "enabled": self.enabled,
             "label": self.label,
@@ -148,6 +149,7 @@ class FeatureFilter(object):
         return json.dumps(featurefilter, indent=2)
 
 # Feature Flag Helper Functions #
+
 
 def custom_serialize_conditions(conditions_dict):
     '''
@@ -241,12 +243,12 @@ def map_keyvalue_to_featureflagvalue(keyvalue):
             'label',
             'conditions'}
         if valid_fields != feature_flag_dict.keys():
-            logger.debug(f"'{feature_name}' feature flag is missing required values or it contains " + \
-                        "unsupported values. Setting missing value to defaults and ignoring unsupported values\n")
+            logger.debug("'%s' feature flag is missing required values or it contains ", feature_name +
+                         "unsupported values. Setting missing value to defaults and ignoring unsupported values\n")
 
         conditions = feature_flag_dict.get('conditions', default_conditions)
         client_filters = conditions.get('client_filters', [])
-        
+
         # Convert all filters to FeatureFilter objects
         client_filters_list = []
         for client_filter in client_filters:
@@ -258,21 +260,21 @@ def map_keyvalue_to_featureflagvalue(keyvalue):
                 client_filters_list.append(FeatureFilter(name, params))
         conditions['client_filters'] = client_filters_list
 
-        feature_flag_value = FeatureFlagValue(feature_name,
-                                            feature_flag_dict.get('description', ''),
-                                            feature_flag_dict.get('enabled', False),
-                                            keyvalue.label,
-                                            conditions)
+        feature_flag_value = FeatureFlagValue(id_=feature_name,
+                                              description=feature_flag_dict.get(
+                                                  'description', ''),
+                                              enabled=feature_flag_dict.get(
+                                                  'enabled', False),
+                                              label=keyvalue.label,
+                                              conditions=conditions)
 
     except ValueError as exception:
-        error_msg = f"Invalid value. Unable to decode the following JSON value: \n{keyvalue.value}. \nFull exception: \n{str(exception)}"
+        error_msg = f"Invalid value. Unable to decode the following JSON value: \n{keyvalue.value}." + \
+            f"\nFull exception: \n{str(exception)}"
         raise ValueError("Invalid value.\n" + error_msg)
 
     except Exception as exception:
-        logger.debug(f"Exception while parsing value:\n{keyvalue.value}\n")
+        logger.debug("Exception while parsing value:\n%s\n", keyvalue.value)
         raise
 
     return feature_flag_value
-
-    
-

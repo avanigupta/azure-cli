@@ -72,21 +72,26 @@ def set_feature(cmd,
                     content_type)
             else:
                 # we make sure that value retrieved is a valid json and only has the fields supported by backend.
-                # if it's invalid, we catch appropriate exception that contains detailed message
-                feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
+                # if it's invalid, we catch appropriate exception that contains
+                # detailed message
+                feature_flag_value = map_keyvalue_to_featureflagvalue(
+                    retrieved_kv)
 
                 # User can only update description if the key already exists
                 feature_flag_value.description = description
                 set_kv = KeyValue(
                     key=key,
                     label=label,
-                    value=json.dumps(feature_flag_value.__dict__, default=lambda o: o.__dict__),
+                    value=json.dumps(
+                        feature_flag_value.__dict__,
+                        default=lambda o: o.__dict__),
                     content_type=content_type,
                     tags=retrieved_kv.tags if retrieved_kv.tags else tags)
                 set_kv.etag = retrieved_kv.etag
                 set_kv.last_modified = retrieved_kv.last_modified
 
-            # Convert KeyValue object to required FeatureFlag format for display
+            # Convert KeyValue object to required FeatureFlag format for
+            # display
             feature_flag = map_keyvalue_to_featureflag(
                 set_kv, show_conditions=True)
             entry = json.dumps(feature_flag.__dict__, indent=2, sort_keys=True)
@@ -209,14 +214,14 @@ def show_feature(cmd,
         # If user has specified fields, we still get all the fields and then
         # filter what we need from the response.
         if fields:
-            partial_ff = {}
+            partial_featureflag = {}
             for field in fields:
                 # feature_flag is guaranteed to have all the fields because
                 # we validate this in map_keyvalue_to_featureflag()
                 # So this line will never throw AttributeError
-                partial_ff[field.name.lower()] = getattr(
+                partial_featureflag[field.name.lower()] = getattr(
                     feature_flag, field.name.lower())
-            return partial_ff
+            return partial_featureflag
         return feature_flag
 
     except Exception as exception:
@@ -239,35 +244,35 @@ def list_feature(cmd,
         retrieved_keyvalues = __list_all_keyvalues(azconfig_client,
                                                    feature=feature,
                                                    label=label)
-        retrieved_featureflag = []
+        retrieved_featureflags = []
         for kv in retrieved_keyvalues:
-            retrieved_featureflag.append(
+            retrieved_featureflags.append(
                 map_keyvalue_to_featureflag(
                     keyvalue=kv, show_conditions=True))
-        filtered_ff = []
+        filtered_featureflags = []
         count = 0
 
         if all_:
-            top = len(retrieved_featureflag)
+            top = len(retrieved_featureflags)
         elif top is None:
             top = 100
 
-        for ff in retrieved_featureflag:
+        for featureflag in retrieved_featureflags:
             if fields:
-                partial_ff = {}
+                partial_featureflags = {}
                 for field in fields:
-                    # ff is guaranteed to have all the fields because
+                    # featureflag is guaranteed to have all the fields because
                     # we validate this in map_keyvalue_to_featureflag()
                     # So this line will never throw AttributeError
-                    partial_ff[field.name.lower()] = getattr(
-                        ff, field.name.lower())
-                filtered_ff.append(partial_ff)
+                    partial_featureflags[field.name.lower()] = getattr(
+                        featureflag, field.name.lower())
+                filtered_featureflags.append(partial_featureflags)
             else:
-                filtered_ff.append(ff)
+                filtered_featureflags.append(featureflag)
             count += 1
             if count >= top:
                 break
-        return filtered_ff
+        return filtered_featureflags
 
     except Exception as exception:
         raise CLIError(str(exception))
@@ -385,7 +390,8 @@ def enable_feature(cmd,
                     "The feature flag {} does not exist.".format(feature))
 
             # we make sure that value retrieved is a valid json and only has the fields supported by backend.
-            # if it's invalid, we catch appropriate exception that contains detailed message
+            # if it's invalid, we catch appropriate exception that contains
+            # detailed message
             feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
 
             feature_flag_value.enabled = True
@@ -394,7 +400,8 @@ def enable_feature(cmd,
             user_confirmation(confirmation_message, yes)
 
             updated_key_value = __update_existing_key_value(
-                azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(feature_flag_value.__dict__, default=lambda o: o.__dict__))
+                azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(
+                    feature_flag_value.__dict__, default=lambda o: o.__dict__))
 
             return map_keyvalue_to_featureflag(
                 keyvalue=updated_key_value, show_conditions=False)
@@ -436,7 +443,8 @@ def disable_feature(cmd,
                     "The feature flag {} does not exist.".format(feature))
 
             # we make sure that value retrieved is a valid json and only has the fields supported by backend.
-            # if it's invalid, we catch appropriate exception that contains detailed message
+            # if it's invalid, we catch appropriate exception that contains
+            # detailed message
             feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
 
             feature_flag_value.enabled = False
@@ -445,7 +453,8 @@ def disable_feature(cmd,
             user_confirmation(confirmation_message, yes)
 
             updated_key_value = __update_existing_key_value(
-                azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(feature_flag_value.__dict__, default=lambda o: o.__dict__))
+                azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(
+                    feature_flag_value.__dict__, default=lambda o: o.__dict__))
 
             return map_keyvalue_to_featureflag(
                 keyvalue=updated_key_value, show_conditions=False)
@@ -499,7 +508,8 @@ def add_filter(cmd,
                     "The feature flag {} does not exist.".format(feature))
 
             # we make sure that value retrieved is a valid json and only has the fields supported by backend.
-            # if it's invalid, we catch appropriate exception that contains detailed message
+            # if it's invalid, we catch appropriate exception that contains
+            # detailed message
             feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
             feature_filters = feature_flag_value.conditions['client_filters']
 
@@ -512,13 +522,15 @@ def add_filter(cmd,
                 logger.debug("Adding new filter at index '%s'.\n", index)
                 feature_filters.insert(index, new_filter.__dict__)
             else:
+                if index > len(feature_filters):
+                    logger.debug(
+                        "Ignoring the provided index '%s' because it is out of range.\n", index)
                 logger.debug("Adding new filter to the end of list.\n")
                 feature_filters.append(new_filter.__dict__)
 
             updated_key_value = __update_existing_key_value(
-                azconfig_client,
-                retrieved_kv=retrieved_kv,
-                updated_value=json.dumps(feature_flag_value.__dict__, default=lambda o: o.__dict__))
+                azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(
+                    feature_flag_value.__dict__, default=lambda o: o.__dict__))
 
             return new_filter
 
@@ -562,7 +574,8 @@ def delete_filter(cmd,
                     "The feature flag {} does not exist.".format(feature))
 
             # we make sure that value retrieved is a valid json and only has the fields supported by backend.
-            # if it's invalid, we catch appropriate exception that contains detailed message
+            # if it's invalid, we catch appropriate exception that contains
+            # detailed message
             feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
             feature_filters = feature_flag_value.conditions['client_filters']
 
@@ -603,7 +616,7 @@ def delete_filter(cmd,
 
                 elif len(match_index) > 1:
                     error_msg = f"Feature '{feature}' contains multiple instances of filter '{filterName}'. For resolving this conflict, " + \
-                        "run the command again with the filter name and zero-based index of the filter you want to delete.\n"
+                        "run the command again with the filter name and correct zero-based index of the filter you want to delete.\n"
                     raise CLIError(str(error_msg))
 
                 else:
@@ -611,9 +624,8 @@ def delete_filter(cmd,
                         f"No filter named '{filterName}' was found for feature '{feature}'")
 
             updated_key_value = __update_existing_key_value(
-                azconfig_client,
-                retrieved_kv=retrieved_kv,
-                updated_value=json.dumps(feature_flag_value.__dict__, default=lambda o: o.__dict__))
+                azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(
+                    feature_flag_value.__dict__, default=lambda o: o.__dict__))
 
             return display_filter
 
@@ -653,9 +665,10 @@ def show_filter(cmd,
         if retrieved_kv is None:
             raise CLIError(
                 "The feature flag {} does not exist.".format(feature))
-        
+
         # we make sure that value retrieved is a valid json and only has the fields supported by backend.
-        # if it's invalid, we catch appropriate exception that contains detailed message
+        # if it's invalid, we catch appropriate exception that contains
+        # detailed message
         feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
         feature_filters = feature_flag_value.conditions['client_filters']
 
@@ -671,7 +684,7 @@ def show_filter(cmd,
 
         # get all filters where name matches filterName provided by user
         display_filters = [
-            ff for ff in feature_filters if ff.name == filterName]
+            featurefilter for featurefilter in feature_filters if featurefilter.name == filterName]
 
         if not display_filters:
             raise CLIError(
@@ -702,7 +715,8 @@ def list_filter(cmd,
                 "The feature flag {} does not exist.".format(feature))
 
         # we make sure that value retrieved is a valid json and only has the fields supported by backend.
-        # if it's invalid, we catch appropriate exception that contains detailed message
+        # if it's invalid, we catch appropriate exception that contains
+        # detailed message
         feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
         feature_filters = feature_flag_value.conditions['client_filters']
 
@@ -739,7 +753,8 @@ def clear_filter(cmd,
                     "The feature flag {} does not exist.".format(feature))
 
             # we make sure that value retrieved is a valid json and only has the fields supported by backend.
-            # if it's invalid, we catch appropriate exception that contains detailed message
+            # if it's invalid, we catch appropriate exception that contains
+            # detailed message
             feature_flag_value = map_keyvalue_to_featureflagvalue(retrieved_kv)
 
             # These fields will never be missing because we validate that
@@ -757,9 +772,8 @@ def clear_filter(cmd,
                 feature_filters.clear()
 
                 updated_key_value = __update_existing_key_value(
-                    azconfig_client,
-                    retrieved_kv=retrieved_kv,
-                    updated_value=json.dumps(feature_flag_value.__dict__, default=lambda o: o.__dict__))
+                    azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(
+                        feature_flag_value.__dict__, default=lambda o: o.__dict__))
 
             return display_filters
 
