@@ -227,7 +227,6 @@ def map_keyvalue_to_featureflagvalue(keyvalue):
             Valid FeatureFlagValue object
     '''
 
-    feature_flag_dict = {}
     default_conditions = {'client_filters': []}
 
     try:
@@ -258,6 +257,9 @@ def map_keyvalue_to_featureflagvalue(keyvalue):
             if name:
                 params = client_filter.get('parameters', {})
                 client_filters_list.append(FeatureFilter(name, params))
+            else:
+                logger.warning("Ignoring this filter without the 'name' attribute:\n%s",
+                               json.dumps(client_filter, indent=2))
         conditions['client_filters'] = client_filters_list
 
         feature_flag_value = FeatureFlagValue(id_=feature_name,
@@ -271,7 +273,7 @@ def map_keyvalue_to_featureflagvalue(keyvalue):
     except ValueError as exception:
         error_msg = f"Invalid value. Unable to decode the following JSON value: \n{keyvalue.value}." + \
             f"\nFull exception: \n{str(exception)}"
-        raise ValueError("Invalid value.\n" + error_msg)
+        raise ValueError(error_msg)
 
     except Exception as exception:
         logger.debug("Exception while parsing value:\n%s\n", keyvalue.value)

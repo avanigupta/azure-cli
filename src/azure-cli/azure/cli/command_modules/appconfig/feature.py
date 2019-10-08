@@ -94,7 +94,7 @@ def set_feature(cmd,
             # display
             feature_flag = map_keyvalue_to_featureflag(
                 set_kv, show_conditions=True)
-            entry = json.dumps(feature_flag.__dict__, indent=2, sort_keys=True)
+            entry = json.dumps(feature_flag.__dict__, default=lambda o: o.__dict__, indent=2, sort_keys=True)
 
         except Exception as exception:
             # Exceptions for ValueError and AttributeError already have customized message
@@ -175,6 +175,7 @@ def delete_feature(cmd,
                 logger.error(
                     json.dumps(
                         failed_ff.__dict__,
+                        default=lambda o: o.__dict__,
                         indent=2,
                         sort_keys=True))
         else:
@@ -299,7 +300,7 @@ def lock_feature(cmd,
 
         feature_flag = map_keyvalue_to_featureflag(
             retrieved_kv, show_conditions=False)
-        entry = json.dumps(feature_flag.__dict__, indent=2, sort_keys=True)
+        entry = json.dumps(feature_flag.__dict__, default=lambda o: o.__dict__, indent=2, sort_keys=True)
         confirmation_message = "Are you sure you want to lock the feature: \n" + entry + "\n"
         user_confirmation(confirmation_message, yes)
 
@@ -344,7 +345,7 @@ def unlock_feature(cmd,
 
         feature_flag = map_keyvalue_to_featureflag(
             retrieved_kv, show_conditions=False)
-        entry = json.dumps(feature_flag.__dict__, indent=2, sort_keys=True)
+        entry = json.dumps(feature_flag.__dict__, default=lambda o: o.__dict__, indent=2, sort_keys=True)
         confirmation_message = "Are you sure you want to unlock the feature: \n" + entry + "\n"
         user_confirmation(confirmation_message, yes)
 
@@ -399,9 +400,10 @@ def enable_feature(cmd,
                 feature)
             user_confirmation(confirmation_message, yes)
 
-            updated_key_value = __update_existing_key_value(
-                azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(
-                    feature_flag_value.__dict__, default=lambda o: o.__dict__))
+            updated_key_value = __update_existing_key_value(azconfig_client=azconfig_client,
+                                                            retrieved_kv=retrieved_kv,
+                                                            updated_value=json.dumps(feature_flag_value.__dict__,
+                                                                                     default=lambda o: o.__dict__))
 
             return map_keyvalue_to_featureflag(
                 keyvalue=updated_key_value, show_conditions=False)
@@ -452,9 +454,10 @@ def disable_feature(cmd,
                 feature)
             user_confirmation(confirmation_message, yes)
 
-            updated_key_value = __update_existing_key_value(
-                azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(
-                    feature_flag_value.__dict__, default=lambda o: o.__dict__))
+            updated_key_value = __update_existing_key_value(azconfig_client=azconfig_client,
+                                                            retrieved_kv=retrieved_kv,
+                                                            updated_value=json.dumps(feature_flag_value.__dict__,
+                                                                                     default=lambda o: o.__dict__))
 
             return map_keyvalue_to_featureflag(
                 keyvalue=updated_key_value, show_conditions=False)
@@ -484,10 +487,9 @@ def add_filter(cmd,
                label=None,
                filterParameters=None,
                yes=False,
-               index=None,
+               index=float("-inf"),
                connection_string=None):
     key = FEATURE_FLAG_PREFIX + feature
-    index = int(index) if index else -1
     connection_string = resolve_connection_string(cmd, name, connection_string)
     azconfig_client = AzconfigClient(connection_string)
 
@@ -520,17 +522,18 @@ def add_filter(cmd,
             # If user has specified index, we insert at that index
             if 0 <= index <= len(feature_filters):
                 logger.debug("Adding new filter at index '%s'.\n", index)
-                feature_filters.insert(index, new_filter.__dict__)
+                feature_filters.insert(index, new_filter)
             else:
-                if index > len(feature_filters):
+                if index != float("-inf"):
                     logger.debug(
-                        "Ignoring the provided index '%s' because it is out of range.\n", index)
+                        "Ignoring the provided index '%s' because it is out of range or invalid.\n", index)
                 logger.debug("Adding new filter to the end of list.\n")
-                feature_filters.append(new_filter.__dict__)
+                feature_filters.append(new_filter)
 
-            updated_key_value = __update_existing_key_value(
-                azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(
-                    feature_flag_value.__dict__, default=lambda o: o.__dict__))
+            updated_key_value = __update_existing_key_value(azconfig_client=azconfig_client,
+                                                            retrieved_kv=retrieved_kv,
+                                                            updated_value=json.dumps(feature_flag_value.__dict__,
+                                                                                     default=lambda o: o.__dict__))
 
             return new_filter
 
@@ -554,11 +557,10 @@ def delete_filter(cmd,
                   filterName,
                   name=None,
                   label=None,
-                  index=None,
+                  index=float("-inf"),
                   yes=False,
                   connection_string=None):
     key = FEATURE_FLAG_PREFIX + feature
-    index = int(index) if index else -1
     connection_string = resolve_connection_string(cmd, name, connection_string)
     azconfig_client = AzconfigClient(connection_string)
 
@@ -604,8 +606,8 @@ def delete_filter(cmd,
             if not display_filter:
                 # this means we have not deleted the filter yet
                 if len(match_index) == 1:
-                    if index != -1:
-                        logger.warning("Found filter '%s' at index '%s'. Ignoring provided index '%s'", filterName, match_index[0], index)
+                    if index != float("-inf"):
+                        logger.warning("Found filter '%s' at index '%s'. Invalidating provided index '%s'", filterName, match_index[0], index)
 
                     display_filter = copy.deepcopy(
                         feature_filters[match_index[0]])
@@ -625,9 +627,10 @@ def delete_filter(cmd,
                     raise CLIError(
                         f"No filter named '{filterName}' was found for feature '{feature}'")
 
-            updated_key_value = __update_existing_key_value(
-                azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(
-                    feature_flag_value.__dict__, default=lambda o: o.__dict__))
+            updated_key_value = __update_existing_key_value(azconfig_client=azconfig_client,
+                                                            retrieved_kv=retrieved_kv,
+                                                            updated_value=json.dumps(feature_flag_value.__dict__,
+                                                                                     default=lambda o: o.__dict__))
 
             return display_filter
 
@@ -651,12 +654,11 @@ def delete_filter(cmd,
 def show_filter(cmd,
                 feature,
                 filterName,
-                index=None,
+                index=float("-inf"),
                 name=None,
                 label=None,
                 connection_string=None):
     key = FEATURE_FLAG_PREFIX + feature
-    index = int(index) if index else -1
     connection_string = resolve_connection_string(cmd, name, connection_string)
     azconfig_client = AzconfigClient(connection_string)
 
@@ -681,8 +683,9 @@ def show_filter(cmd,
         if 0 <= index < len(feature_filters):
             if feature_filters[index].name == filterName:
                 return feature_filters[index]
+        if index != float("-inf"):
             logger.warning(
-                "Could not find filter at the index provided. Ignoring index and trying to find the filter by name.")
+                "Could not find filter with the index provided. Ignoring index and trying to find the filter by name.")
 
         # get all filters where name matches filterName provided by user
         display_filters = [
@@ -773,9 +776,10 @@ def clear_filter(cmd,
                 display_filters = copy.deepcopy(feature_filters)
                 feature_filters.clear()
 
-                updated_key_value = __update_existing_key_value(
-                    azconfig_client, retrieved_kv=retrieved_kv, updated_value=json.dumps(
-                        feature_flag_value.__dict__, default=lambda o: o.__dict__))
+                updated_key_value = __update_existing_key_value(azconfig_client=azconfig_client,
+                                                                retrieved_kv=retrieved_kv,
+                                                                updated_value=json.dumps(feature_flag_value.__dict__,
+                                                                                         default=lambda o: o.__dict__))
 
             return display_filters
 
