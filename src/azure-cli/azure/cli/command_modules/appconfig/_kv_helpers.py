@@ -397,21 +397,11 @@ def __print_features_preview(old_json, new_json):
         logger.warning('\nTarget configuration already contains all feature flags in source. No changes will be made.')
         return False
 
-    # format result printing
+    # JsonDiffer returns false positive for update of feature flag conditions.
+    # We need to make sure that the conditions really need updating before printing them.
+    needs_update = False
     for action, changes in res.items():
-        if action.label == 'delete':
-            continue  # we do not delete KVs while importing/exporting
-        elif action.label == 'insert':
-            logger.warning('\nAdding:')
-            for key, adding in changes.items():
-                record = {'feature': key}
-                for attribute, value in adding.items():
-                    if attribute in ('description', 'conditions'):
-                        continue
-                    record[str(attribute)] = str(value)
-                logger.warning(json.dumps(record, ensure_ascii=False))
-        elif action.label == 'update':
-            logger.warning('\nUpdating:')
+        if action.label == 'update':
             for key, updates in changes.items():
                 updates = list(updates.values())[0]
                 attributes = list(updates.keys())
@@ -420,10 +410,34 @@ def __print_features_preview(old_json, new_json):
                 for attribute in attributes:
                     old_record[attribute] = old_json[key][attribute]
                     new_record[attribute] = new_json[key][attribute]
-                logger.warning('- %s', str(old_record))
-                logger.warning('+ %s', str(new_record))
+                if str(old_record) != str(new_record):
+                    if not needs_update:
+                        # This is the first update record. Print 'Updating' section heading.
+                        logger.warning('\nUpdating:')
+                        needs_update = True
+                    logger.warning('- %s', str(old_record))
+                    logger.warning('+ %s', str(new_record))
+
+    # format result printing
+    for action, changes in res.items():
+        if action.label == 'delete':
+            continue  # we do not delete KVs while importing/exporting
+        elif action.label == 'insert':
+            needs_update = True
+            logger.warning('\nAdding:')
+            for key, adding in changes.items():
+                record = {'feature': key}
+                for attribute, value in adding.items():
+                    if attribute in ('description', 'conditions'):
+                        continue
+                    record[str(attribute)] = str(value)
+                logger.warning(json.dumps(record, ensure_ascii=False))
+
+    if not needs_update:
+        logger.warning('\nTarget configuration already contains all feature flags in source. No changes will be made.')
+
     logger.warning("")  # printing an empty line for formatting purpose
-    return True
+    return needs_update
 
 
 def __print_preview(old_json, new_json):
