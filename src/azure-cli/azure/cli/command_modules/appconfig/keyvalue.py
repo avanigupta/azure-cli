@@ -96,8 +96,8 @@ def import_config(cmd,
 
         # generate preview and wait for user confirmation
         need_kv_change = __print_preview(
-            old_json=__serialize_kv_list_to_comparable_json_object(keyvalues=dest_kvs, level=source),
-            new_json=__serialize_kv_list_to_comparable_json_object(keyvalues=src_kvs, level=source))
+            old_json=__serialize_kv_list_to_comparable_json_object(keyvalues=dest_kvs, level=source, label=label),
+            new_json=__serialize_kv_list_to_comparable_json_object(keyvalues=src_kvs, level=source, label=label))
 
         need_feature_change = False
         if src_features and not skip_features:
@@ -109,8 +109,8 @@ def import_config(cmd,
                     dest_features.append(feature)
 
             need_feature_change = __print_features_preview(
-                old_json=__serialize_features_from_kv_list_to_comparable_json_object(keyvalues=dest_features),
-                new_json=__serialize_features_from_kv_list_to_comparable_json_object(keyvalues=src_features))
+                old_json=__serialize_features_from_kv_list_to_comparable_json_object(keyvalues=dest_features, label=label),
+                new_json=__serialize_features_from_kv_list_to_comparable_json_object(keyvalues=src_features, label=label))
 
         if not need_kv_change and not need_feature_change:
             return
@@ -203,14 +203,14 @@ def export_config(cmd,
 
         # generate preview and wait for user confirmation
         need_kv_change = __print_preview(
-            old_json=__serialize_kv_list_to_comparable_json_object(keyvalues=dest_kvs, level=destination),
-            new_json=__serialize_kv_list_to_comparable_json_object(keyvalues=src_kvs, level=destination))
+            old_json=__serialize_kv_list_to_comparable_json_object(keyvalues=dest_kvs, level=destination, label=dest_label),
+            new_json=__serialize_kv_list_to_comparable_json_object(keyvalues=src_kvs, level=destination, label=dest_label))
 
         need_feature_change = False
         if src_features:
             need_feature_change = __print_features_preview(
-                old_json=__serialize_feature_list_to_comparable_json_object(features=dest_features),
-                new_json=__serialize_feature_list_to_comparable_json_object(features=src_features))
+                old_json=__serialize_feature_list_to_comparable_json_object(features=dest_features, label=dest_label),
+                new_json=__serialize_feature_list_to_comparable_json_object(features=src_features, label=dest_label))
 
         if not need_kv_change and not need_feature_change:
             return

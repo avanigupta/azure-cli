@@ -302,21 +302,25 @@ def __write_kv_to_app_service(cmd, key_values, appservice_account):
 # Helper functions
 
 
-def __serialize_kv_list_to_comparable_json_object(keyvalues, level):
+def __serialize_kv_list_to_comparable_json_object(keyvalues, level, label=None, preserve_labels=False):
     res = {}
     if level == 'file':  # import/export only key and value
+        label = None
         for kv in keyvalues:
             kv_json = {'value': kv.value}
-            res[kv.key] = kv_json
+            res[(kv.key, label)] = kv_json
+
     # import/export key, value, and tags (same level as key-value)
     elif level == 'appservice':
+        label = None
         for kv in keyvalues:
             kv_json = {'value': kv.value}
             if kv.tags:
                 for tag_k, tag_v in kv.tags.items():
                     if tag_k == 'AppService:SlotSetting':
                         kv_json[tag_k] = tag_v
-            res[kv.key] = kv_json
+            res[(kv.key, label)] = kv_json
+
     # import/export key, value, content-type, and tags (as a sub group)
     elif level == 'appconfig':
         for kv in keyvalues:
@@ -333,21 +337,22 @@ def __serialize_kv_list_to_comparable_json_object(keyvalues, level):
                 kv_json['content type'] = kv.content_type
             else:
                 kv_json['content type'] = ""
-            # key
-            res[kv.key] = kv_json
+            # key and label
+            label = label if not preserve_labels else kv.label
+            res[(kv.key, label)] = kv_json
     return res
 
 
-def __serialize_features_from_kv_list_to_comparable_json_object(keyvalues):
+def __serialize_features_from_kv_list_to_comparable_json_object(keyvalues, label=None, preserve_labels=False):
     features = []
     for kv in keyvalues:
         feature = map_keyvalue_to_featureflag(kv)
         features.append(feature)
 
-    return __serialize_feature_list_to_comparable_json_object(features)
+    return __serialize_feature_list_to_comparable_json_object(features, label, preserve_labels)
 
 
-def __serialize_feature_list_to_comparable_json_object(features):
+def __serialize_feature_list_to_comparable_json_object(features, label=None, preserve_labels=False):
     res = {}
     for feature in features:
         # state
@@ -356,8 +361,9 @@ def __serialize_feature_list_to_comparable_json_object(features):
         feature_json['description'] = feature.description
         # conditions
         feature_json['conditions'] = feature.conditions
-        # key
-        res[feature.key] = feature_json
+        # key and label
+        label = label if not preserve_labels else feature.label
+        res[(feature.key, label)] = feature_json
     return res
 
 
@@ -405,8 +411,11 @@ def __print_features_preview(old_json, new_json):
             for key, updates in changes.items():
                 updates = list(updates.values())[0]
                 attributes = list(updates.keys())
-                old_record = {'feature': key}
-                new_record = {'feature': key}
+                old_record = {'feature': key[0]}
+                # old_record['label'] = key[1]
+                new_record = {'feature': key[0]}
+                # new_record['label'] = key[1]
+
                 for attribute in attributes:
                     old_record[attribute] = old_json[key][attribute]
                     new_record[attribute] = new_json[key][attribute]
@@ -415,8 +424,8 @@ def __print_features_preview(old_json, new_json):
                         # This is the first update record. Print 'Updating' section heading.
                         logger.warning('\nUpdating:')
                         needs_update = True
-                    logger.warning('- %s', str(old_record))
-                    logger.warning('+ %s', str(new_record))
+                    logger.warning('- %s', json.dumps(old_record, default=lambda o: o.__dict__, indent=2, ensure_ascii=False))
+                    logger.warning('+ %s', json.dumps(new_record, default=lambda o: o.__dict__, indent=2, ensure_ascii=False))
 
     # format result printing
     for action, changes in res.items():
@@ -426,7 +435,8 @@ def __print_features_preview(old_json, new_json):
             needs_update = True
             logger.warning('\nAdding:')
             for key, adding in changes.items():
-                record = {'feature': key}
+                record = {'feature': key[0]}
+                record['label'] = key[1]
                 for attribute, value in adding.items():
                     if attribute in ('description', 'conditions'):
                         continue
@@ -464,7 +474,8 @@ def __print_preview(old_json, new_json):
         elif action.label == 'insert':
             logger.warning('\nAdding:')
             for key, adding in changes.items():
-                record = {'key': key}
+                record = {'key': key[0]}
+                record['label'] = key[1]
                 for attribute, value in adding.items():
                     record[str(attribute)] = str(value)
                 logger.warning(json.dumps(record, ensure_ascii=False))
@@ -473,8 +484,11 @@ def __print_preview(old_json, new_json):
             for key, updates in changes.items():
                 updates = list(updates.values())[0]
                 attributes = list(updates.keys())
-                old_record = {'key': key}
-                new_record = {'key': key}
+                old_record = {'key': key[0]}
+                # old_record['label'] = key[1]
+                new_record = {'key': key[0]}
+                # new_record['label'] = key[1]
+
                 for attribute in attributes:
                     old_record[attribute] = old_json[key][attribute]
                     new_record[attribute] = new_json[key][attribute]

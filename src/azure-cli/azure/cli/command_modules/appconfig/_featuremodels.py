@@ -293,7 +293,8 @@ def map_keyvalue_to_featureflagvalue(keyvalue):
             for client_filter in client_filters:
                 # If there is a filter, it should always have a name
                 # In case it doesn't, ignore this filter
-                name = client_filter.get('name')
+                filter_ = {filter_key.lower(): filter_val for filter_key, filter_val in client_filter.items()}
+                name = filter_.get('name')
                 if name:
                     params = client_filter.get('parameters', {})
                     client_filters_list.append(FeatureFilter(name, params))
