@@ -405,6 +405,7 @@ def __print_features_preview(old_json, new_json):
 
     # JsonDiffer returns false positive for update of feature flag conditions.
     # We need to make sure that the conditions really need updating before printing them.
+    total_features_updated = 0
     needs_update = False
     for action, changes in res.items():
         if action.label == 'update':
@@ -424,6 +425,7 @@ def __print_features_preview(old_json, new_json):
                         # This is the first update record. Print 'Updating' section heading.
                         logger.warning('\nUpdating:')
                         needs_update = True
+                    total_features_updated += 1
                     logger.warning('- %s', json.dumps(old_record, default=lambda o: o.__dict__, indent=2, ensure_ascii=False))
                     logger.warning('+ %s', json.dumps(new_record, default=lambda o: o.__dict__, indent=2, ensure_ascii=False))
 
@@ -433,6 +435,7 @@ def __print_features_preview(old_json, new_json):
             needs_update = True
             logger.warning('\nAdding:')
             for key, adding in changes.items():
+                total_features_updated += 1
                 record = {'feature': key[0]}
                 record['label'] = key[1]
                 for attribute, value in adding.items():
@@ -442,9 +445,10 @@ def __print_features_preview(old_json, new_json):
                 logger.warning(json.dumps(record, ensure_ascii=False))
 
     if not needs_update:
-        logger.warning('\nTarget configuration already contains all feature flags in source. No changes will be made.')
+        logger.warning('\nTarget configuration already contains all feature flags in source. No changes will be made.\n')
+    else:
+        logger.warning("\n%s feature flags will be updated.\n", total_features_updated)
 
-    logger.warning("")  # printing an empty line for formatting purpose
     return needs_update
 
 
@@ -465,6 +469,7 @@ def __print_preview(old_json, new_json):
         logger.warning('\nTarget configuration already contains all key-values in source. No changes will be made.')
         return False
 
+    total_keys_updated = 0
     # format result printing
     for action, changes in res.items():
         if action.label == 'delete':
@@ -472,6 +477,7 @@ def __print_preview(old_json, new_json):
         elif action.label == 'insert':
             logger.warning('\nAdding:')
             for key, adding in changes.items():
+                total_keys_updated += 1
                 record = {'key': key[0]}
                 record['label'] = key[1]
                 for attribute, value in adding.items():
@@ -480,6 +486,7 @@ def __print_preview(old_json, new_json):
         elif action.label == 'update':
             logger.warning('\nUpdating:')
             for key, updates in changes.items():
+                total_keys_updated += 1
                 updates = list(updates.values())[0]
                 attributes = list(updates.keys())
                 old_record = {'key': key[0]}
@@ -492,7 +499,8 @@ def __print_preview(old_json, new_json):
                     new_record[attribute] = new_json[key][attribute]
                 logger.warning('- %s', json.dumps(old_record, ensure_ascii=False))
                 logger.warning('+ %s', json.dumps(new_record, ensure_ascii=False))
-    logger.warning("")  # printing an empty line for formatting purpose
+
+    logger.warning("\n%s keys will be updated.\n", total_keys_updated)
     return True
 
 
