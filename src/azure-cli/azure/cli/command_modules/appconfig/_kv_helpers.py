@@ -429,9 +429,7 @@ def __print_features_preview(old_json, new_json):
 
     # format result printing
     for action, changes in res.items():
-        if action.label == 'delete':
-            continue  # we do not delete KVs while importing/exporting
-        elif action.label == 'insert':
+        if action.label == 'insert':
             needs_update = True
             logger.warning('\nAdding:')
             for key, adding in changes.items():
