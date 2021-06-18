@@ -197,14 +197,16 @@ def __read_kv_from_file(file_path,
                                     value=key,
                                     flattened_data=flattened_data,
                                     depth=depth,
-                                    separator=separator)
+                                    separator=separator,
+                                    format=format_)
                 index += 1
             else:
                 __flatten_key_value(key=prefix_to_add + key,
                                     value=config_data[key],
                                     flattened_data=flattened_data,
                                     depth=depth,
-                                    separator=separator)
+                                    separator=separator,
+                                    format=format_)
 
     # convert to KeyValue list
     key_values = []
@@ -723,12 +725,12 @@ def __flatten_json_key_value(key, value, flattened_data, depth, separator):
             if key in flattened_data:
                 logger.debug(
                     "The key %s already exist, value has been overwritten.", key)
-            flattened_data[key] = json.dumps(value)
+            flattened_data[key] = json.dumps(value, ensure_ascii=False)
     else:
-        flattened_data[key] = json.dumps(value)
+        flattened_data[key] = json.dumps(value, ensure_ascii=False)
 
 
-def __flatten_key_value(key, value, flattened_data, depth, separator):
+def __flatten_key_value(key, value, flattened_data, depth, separator, format):
     if depth > 1:
         depth = depth - 1
         if isinstance(value, list):
@@ -745,13 +747,38 @@ def __flatten_key_value(key, value, flattened_data, depth, separator):
             for nested_key in value:
                 __flatten_key_value(
                     key + separator + nested_key, value[nested_key], flattened_data, depth, separator)
+        elif isinstance(value, bool):
+            if key in flattened_data:
+                logger.debug(
+                    "The key %s already exist, value has been overwritten.", key)
+            flattened_data[key] = str(json.dumps(value, ensure_ascii=False))
+        elif value is None:
+            if key in flattened_data:
+                logger.debug(
+                    "The key %s already exist, value has been overwritten.", key)
+            flattened_data[key] = str(json.dumps(value, ensure_ascii=False))
         else:
             if key in flattened_data:
                 logger.debug(
                     "The key %s already exist, value has been overwritten.", key)
             flattened_data[key] = str(value)
     else:
-        flattened_data[key] = str(value)
+        if isinstance(value, bool):
+            if key in flattened_data:
+                logger.debug(
+                    "The key %s already exist, value has been overwritten.", key)
+            flattened_data[key] = str(json.dumps(value, ensure_ascii=False))
+        elif value is None:
+            if key in flattened_data:
+                logger.debug(
+                    "The key %s already exist, value has been overwritten.", key)
+            flattened_data[key] = str(json.dumps(value, ensure_ascii=False))
+        else:
+            if key in flattened_data:
+                logger.debug(
+                    "The key %s already exist, value has been overwritten.", key)
+            flattened_data[key] = str(value)
+
 
 
 def __export_keyvalue(key_segments, value, constructed_data, key):
