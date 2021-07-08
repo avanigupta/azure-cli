@@ -39,6 +39,7 @@ def create_configstore(client,
     if assign_identity is not None and not assign_identity:
         assign_identity = [SYSTEM_ASSIGNED_IDENTITY]
 
+    test = 1
     public_network_access = None
     if enable_public_network is not None:
         public_network_access = 'Enabled' if enable_public_network else 'Disabled'
